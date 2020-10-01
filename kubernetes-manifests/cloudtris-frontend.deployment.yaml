@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-cloudtris-frontend
+  labels:
+    app: nodejs-cloudtris
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodejs-cloudtris
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: nodejs-cloudtris
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nodejs-cloudtris-frontend
+        ports:
+        - name: http-server
+          containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: CLOUDTRIS_API_ADDR
+          value: nodejs-cloudtris-backend:8080
