@@ -1,7 +1,8 @@
 const game = new GameState(7)
-const BLOCK_SIZE = 10
+const BLOCK_SIZE = 20
 let dir = -1
 let rot = -1
+let pause = false
 
 function setup() {
     frameRate(60)
@@ -10,6 +11,9 @@ function setup() {
 
 
 function draw() {
+    if (pause) {
+        return
+    }
     game.update(1, dir, rot)
     rot = -1
     background(220)
@@ -21,7 +25,7 @@ function draw() {
             let x = col * BLOCK_SIZE
             let y = row * BLOCK_SIZE
             if (field[row][col]) {
-                fill(color(255, 204, 0))
+                fill(color(field[row][col].r, field[row][col].g, field[row][col].b))
                 rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
             } else {
 
@@ -35,11 +39,14 @@ function keyPressed() {
         dir = 0
     } else if (keyCode === RIGHT_ARROW) {
         dir = 1
-    }
-    if (key === 'z') {
-        rot = 2
+    } else if (keyCode === DOWN_ARROW) {
+        dir = 2
+    } else if (key === ' ') {
+        pause = !pause
+    } else if (key === 'z') {
+        rot = 0
     } else if (key === 'x') {
-        rot = 3
+        rot = 1
     }
 }
 

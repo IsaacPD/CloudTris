@@ -5,11 +5,20 @@ const STARTING_ROW = 0
 const STARTING_COL = 5
 const LEFT = 0
 const RIGHT = 1
-const ROT_LEFT = 2
-const ROT_RIGHT = 3
+const DOWN = 2
+const ROT_LEFT = 0
+const ROT_RIGHT = 1
 const AUTO_SHIFT_DELAY = 16
 
-const FRAMES_PER_CELL_BY_LEVEL = {
+T_COLOR = {r: 241, g: 3, b: 3}
+J_COLOR = {r: 255, g: 218, b: 0}
+Z_COLOR = {r: 72, g: 254, b: 2}
+O_COLOR = {r: 0, g: 255, b: 145}
+S_COLOR = {r: 2, g: 146, b: 255}
+L_COLOR = {r: 73, g: 0, b: 255}
+I_COLOR = {r: 255,g: 1, b: 218}
+
+const DROP_SPEED_BY_LEVEL = {
     0: 48,
     1: 43,
     2: 38,
@@ -37,11 +46,37 @@ class Tetromino {
     cells
     highestBlockRow
     lowestBlockRow
+    letfmostBlockCol
+    righmostBlockCol
+    color
 
-    constructor(repr) {
+    constructor(repr, color) {
         this.cells = repr
         this.highestBlockRow = this.getHighestBlockRow()
         this.lowestBlockRow = this.getLowestBlockRow()
+        this.letfmostBlockCol = this.getLeftmostBlockCol()
+        this.righmostBlockCol = this.getRightmostBlockCol()
+        this.color = color
+    }
+
+    getLeftmostBlockCol() {
+        for (let col = 0; col < this.size(); col++) {
+            for (let row = 0; row < this.size(); row++) {
+                if (this.cells[row][col] === '-') {
+                    return col
+                }
+            }
+        }
+    }
+
+    getRightmostBlockCol() {
+        for (let col = this.size() - 1; col >= 0; col--) {
+            for (let row = 0; row < this.size(); row++) {
+                if (this.cells[row][col] === '-') {
+                    return col
+                }
+            }
+        }
     }
 
     getHighestBlockRow() {
@@ -68,28 +103,22 @@ class Tetromino {
         const N = this.cells.length
         let mat = [...Array(N)].map(_=>Array(N).fill(' '))
         for (let i = 0; i < N; i++) {
-            for (let j = i; j < N-i-1; j++) {
-                mat[N-1-j][i] = this.cells[i][j]
-                mat[i][j] = this.cells[j][N-1-i]
-                mat[j][N-1-i] = this.cells[N-1-i][N-1-j]
-                mat[N-1-i][N-1-j] = this.cells[N-1-j][i]
+            for (let j = 0; j < N; j++) {
+                mat[i][j] = this.cells[j][N - i - 1]
             }
         }
-        return new Tetromino(mat)
+        return new Tetromino(mat, this.color)
     }
 
     rotateRight() {
         const N = this.cells.length
         let mat = [...Array(N)].map(_=>Array(N).fill(' '))
         for (let i = 0; i < N; i++) {
-            for (let j = i; j < N-i-1; j++) {
-                mat[j][N-1-i] = this.cells[i][j]
-                mat[i][j] = this.cells[N-1-j][i]
-                mat[N-1-j][i] = this.cells[N-1-i][N-1-j]
-                mat[N-1-i][N-1-j] = this.cells[j][N-1-i]
+            for (let j = 0; j < N; j++) {
+                mat[i][j] = this.cells[N - j - 1][i]
             }
         }
-        return new Tetromino(mat)
+        return new Tetromino(mat, this.color)
     }
 
     get(row, col) {
@@ -101,43 +130,44 @@ class Tetromino {
     }
 }
 
+const INT_TO_COLOR = {0: O_COLOR, 1: I_COLOR, 2: J_COLOR, 3: L_COLOR, 4: Z_COLOR, 5: S_COLOR, 6: T_COLOR}
 const INT_TO_SHAPE = {0: "O", 1: "I", 2: "J", 3: "L", 4: "Z", 5: "S", 6: "T"}
 const SHAPES = {
     O : new Tetromino([
         ['-', '-'],
         ['-', '-']
-    ]),
+    ], O_COLOR),
     I : new Tetromino([
         [' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' '],
         ['-', '-', '-', '-'],
         [' ', ' ', ' ', ' ']
-    ]),
+    ], I_COLOR),
     J : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         [' ', ' ', '-']
-    ]),
+    ], J_COLOR),
     L : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         ['-', ' ', ' ']
-    ]),
+    ], L_COLOR),
     Z : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', ' '],
         [' ', '-', '-']
-    ]),
+    ], Z_COLOR),
     S : new Tetromino([
         [' ', ' ', ' '],
         [' ', '-', '-'],
         ['-', '-', ' ']
-    ]),
+    ], S_COLOR),
     T : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         [' ', '-', ' ']
-    ])
+    ], T_COLOR)
 }
 
 const getRandomPiece = function() {
@@ -153,6 +183,7 @@ class GameState {
     level
     currentFrame = 0
     autoShiftFrame = 16
+    autoRepeatDrop = -96
 
     constructor(level = 0) {
         this.level = level
@@ -164,29 +195,47 @@ class GameState {
 
     update(framesPassed, dir, rot) {
         this.currentFrame += framesPassed
-        const numMoves = this.currentFrame / FRAMES_PER_CELL_BY_LEVEL[this.level]
-        if (numMoves > 0) {
-            for (let i = 0; i < Math.floor(numMoves); i++) {
-                this.move()
+        if (this.autoRepeatDrop < 0)
+            this.autoRepeatDrop += framesPassed
+        const numMoves = this.currentFrame / DROP_SPEED_BY_LEVEL[this.level]
+        this.parseInput(dir, rot)
+        if (numMoves > 0 || this.autoRepeatDrop === 3) {
+            if (this.autoRepeatDrop >= 0) {
+                for (let i = 0; i < Math.floor(numMoves); i++) {
+                    this.move()
+                }
             }
-            this.parseInput(dir, rot)
-            this.currentFrame -= FRAMES_PER_CELL_BY_LEVEL[this.level] * Math.floor(numMoves)
+            if (this.autoRepeatDrop === 3) {
+                this.autoRepeatDrop = 1
+            }
+            this.currentFrame -= DROP_SPEED_BY_LEVEL[this.level] * Math.floor(numMoves)
         }
     }
 
     parseInput(dir, rot) {
+        if (dir === DOWN) {
+            if (this.autoRepeatDrop < 0) {
+                this.autoRepeatDrop = 0
+            } else {
+                this.autoRepeatDrop++
+            }
+        }
         if (dir !== -1) {
             if (this.autoShiftFrame === 0 || this.autoShiftFrame === 16) {
                 switch (dir) {
                     case LEFT:
                         this.pieceCol--
+                        if (this.invalid())
+                            this.pieceCol++
                         break
                     case RIGHT:
                         this.pieceCol++
+                        if (this.invalid())
+                            this.pieceCol--
                         break
                 }
                 if (this.autoShiftFrame === 16) {
-                    this.autoShiftFrame -= 6
+                    this.autoShiftFrame = 10
                 }
             }
             if (this.autoShiftFrame < 16) {
@@ -198,17 +247,43 @@ class GameState {
         switch (rot) {
             case ROT_RIGHT:
                 this.currentPiece = this.currentPiece.rotateRight()
+                if (this.invalid()) {
+                    this.currentPiece = this.currentPiece.rotateLeft()
+                }
                 break
             case ROT_LEFT:
                 this.currentPiece = this.currentPiece.rotateLeft()
+                if (this.invalid()) {
+                    this.currentPiece = this.currentPiece.rotateRight()
+                }
                 break
         }
     }
 
+    invalid() {
+        if (this.pieceRow + this.currentPiece.lowestBlockRow >= HEIGHT || 
+            this.pieceCol + this.currentPiece.letfmostBlockCol < 0 || 
+            this.pieceCol + this.currentPiece.righmostBlockCol >= WIDTH) {
+                return true
+        }
+
+         for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
+            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                if (this.pieceRow + row < 0) continue
+                if (this.field[this.pieceRow + row][this.pieceCol + col] !== ' ') {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     move() {
-        this.pieceRow++
         if (this.touchesGround()) {
             this.lockPiece()
+        } else {
+            this.pieceRow++
         }
     }
 
@@ -216,10 +291,9 @@ class GameState {
         if (this.currentPiece.lowestBlockRow + this.pieceRow + 1 >= HEIGHT) {
             return true
         }
-        const pieceSize = this.currentPiece.size()
-        for (let row = 0; row < pieceSize; row++) {
-            for (let col = 0; col < pieceSize; col++) {
-                if (this.currentPiece.get(row, col) === '-' && this.field[this.pieceRow + row + 1][this.pieceCol + col] == '-') {
+        for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
+            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                if (this.currentPiece.get(row, col) === '-' && this.field[this.pieceRow + row + 1][this.pieceCol + col] !== ' ') {
                     return true
                 }
             }
@@ -229,6 +303,7 @@ class GameState {
 
     lockPiece() {
         this.placePiece()
+        this.clearLines()
         this.currentPiece = this.nextPiece
         this.nextPiece = getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
@@ -236,29 +311,60 @@ class GameState {
     }
 
     placePiece() {
-        const size = this.currentPiece.size()
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                if (this.pieceRow + row >= 0) {
-                    if (this.currentPiece.get(row, col) === '-')
-                        this.field[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.get(row, col)
+        for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
+            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                if (this.currentPiece.get(row, col) === '-')
+                    this.field[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.color
+            }
+        }
+    }
+
+    clearLines() {
+        let topRow = this.currentPiece.highestBlockRow + this.pieceRow
+        let botRow = this.currentPiece.lowestBlockRow + this.pieceRow
+        let clearedRows = {}
+
+        for (let row = topRow; row <= botRow; row++) {
+            clearedRows[row] = true
+            for (let col = 0; col < WIDTH; col++) {
+                if (this.field[row][col] === ' ') {
+                    clearedRows[row] = false
+                    break
                 }
             }
+        }
+
+        let numRowsCleared = 0
+        for (let row = botRow; row >= 0; row--) {
+            if (clearedRows[row]) {
+                numRowsCleared++
+                continue
+            }
+            this.moveRowDown(row, numRowsCleared)
+        }
+    }
+
+    moveRowDown(row, numDown) {
+        if (numDown === 0) return
+        for (let col = 0; col < WIDTH; col++) {
+            this.field[row + numDown][col] = this.field[row][col]
         }
     }
 
     getField() {
         let mat = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(false))
-        const size = this.currentPiece.size()
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                if (this.pieceRow + row >= 0)
-                    mat[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.get(row, col) === '-'
+        for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
+            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                if (this.pieceRow + row >= 0 && this.currentPiece.get(row, col) !== ' ') {
+                    mat[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.color
+                }
             }
         }
         for (let row = 0; row < HEIGHT; row++) {
             for (let col = 0; col < WIDTH; col++) {
-                mat[row][col] = mat[row][col] || this.field[row][col] === '-'
+                if (this.field[row][col] !== ' ') {
+                    mat[row][col] = this.field[row][col]
+                }
             }
         }
         return mat
