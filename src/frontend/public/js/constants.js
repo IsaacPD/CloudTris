@@ -181,7 +181,7 @@ class GameState {
     pieceRow
     pieceCol
     level
-    currentFrame = 0
+    fallTimer = 0
     autoShiftFrame = 16
     autoRepeatDrop = -96
 
@@ -193,46 +193,36 @@ class GameState {
         this.pieceCol = STARTING_COL
     }
 
-    update(framesPassed, dir, rot) {
-        this.currentFrame += framesPassed
-        if (this.autoRepeatDrop < 0)
-            this.autoRepeatDrop += framesPassed
-        const numMoves = this.currentFrame / DROP_SPEED_BY_LEVEL[this.level]
-        this.parseInput(dir, rot)
-        if (numMoves > 0 || this.autoRepeatDrop === 3) {
-            if (this.autoRepeatDrop >= 0) {
-                for (let i = 0; i < Math.floor(numMoves); i++) {
-                    this.move()
-                }
-            }
-            if (this.autoRepeatDrop === 3) {
-                this.autoRepeatDrop = 1
-            }
-            this.currentFrame -= DROP_SPEED_BY_LEVEL[this.level] * Math.floor(numMoves)
-        }
+    update(framesPassed, pressed, held, rot) {
+        this.fallTimer += framesPassed
+        this.parseInput(pressed, held, rot)
+        this.move(framesPassed)
     }
 
-    parseInput(dir, rot) {
-        if (dir === DOWN) {
+    parseInput(pressed, held, rot) {
+        if (pressed & (1 << DOWN)) {
             if (this.autoRepeatDrop < 0) {
                 this.autoRepeatDrop = 0
-            } else {
-                this.autoRepeatDrop++
+            } else if (!(held & (1 << RIGHT) || held & (1 << LEFT))) {
+                this.autoRepeatDrop = 1
             }
+        } else if (held & (1 << DOWN) && !(held & (1 << RIGHT) || held & (1 << LEFT))) {
+            this.autoRepeatDrop++
+        } else if (this.autoRepeatDrop > 0) {
+            this.autoRepeatDrop = 0
         }
-        if (dir !== -1) {
+
+        if (pressed !== 0) {
             if (this.autoShiftFrame === 0 || this.autoShiftFrame === 16) {
-                switch (dir) {
-                    case LEFT:
-                        this.pieceCol--
-                        if (this.invalid())
-                            this.pieceCol++
-                        break
-                    case RIGHT:
+                if (pressed & (1 << LEFT)) {
+                    this.pieceCol--
+                    if (this.invalid())
                         this.pieceCol++
-                        if (this.invalid())
-                            this.pieceCol--
-                        break
+                }
+                if (pressed & (1 << RIGHT)) {
+                    this.pieceCol++
+                    if (this.invalid())
+                        this.pieceCol--
                 }
                 if (this.autoShiftFrame === 16) {
                     this.autoShiftFrame = 10
@@ -279,11 +269,29 @@ class GameState {
         return false
     }
 
-    move() {
-        if (this.touchesGround()) {
-            this.lockPiece()
-        } else {
-            this.pieceRow++
+    move(framesPassed) {
+        if (this.autoRepeatDrop < 0) {
+            this.autoRepeatDrop += framesPassed
+            return
+        }
+        if (this.autoRepeatDrop === 3) {
+            this.autoRepeatDrop = 1
+            this.fallTimer = 0
+            if (this.touchesGround()) {
+                this.lockPiece()
+            } else {
+                this.pieceRow++
+            }
+            return
+        }
+
+        if (this.fallTimer > DROP_SPEED_BY_LEVEL[this.level]) {
+            if (this.touchesGround()) {
+                this.lockPiece()
+            } else {
+                this.pieceRow++
+            }
+            this.fallTimer = 0
         }
     }
 

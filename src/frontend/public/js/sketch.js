@@ -1,6 +1,7 @@
 const game = new GameState(7)
 const BLOCK_SIZE = 20
-let dir = -1
+let held = 0
+let pressed = 0
 let rot = -1
 let pause = false
 
@@ -14,7 +15,8 @@ function draw() {
     if (pause) {
         return
     }
-    game.update(1, dir, rot)
+    game.update(1, pressed, held, rot)
+    pressed = 0
     rot = -1
     background(220)
     noFill()
@@ -36,11 +38,14 @@ function draw() {
 
 function keyPressed() {
     if (keyCode === LEFT_ARROW) {
-        dir = 0
+        pressed |= 1 << LEFT
+        held |= 1 << LEFT
     } else if (keyCode === RIGHT_ARROW) {
-        dir = 1
+        pressed |= 1 << RIGHT
+        held |= 1 << RIGHT
     } else if (keyCode === DOWN_ARROW) {
-        dir = 2
+        pressed |= 1 << DOWN
+        held |= 1 << DOWN
     } else if (key === ' ') {
         pause = !pause
     } else if (key === 'z') {
@@ -51,7 +56,11 @@ function keyPressed() {
 }
 
 function keyReleased() {
-    if (keyCode === LEFT_ARROW || keyCode === RIGHT_ARROW) {
-        dir = -1
+    if (keyCode === LEFT_ARROW) {
+        held &= ~(1 << LEFT)
+    } else if (keyCode === RIGHT_ARROW) {
+        held &= ~(1 << RIGHT)
+    } else if (keyCode === DOWN_ARROW) {
+        held &= ~(1 << DOWN)
     }
 }
