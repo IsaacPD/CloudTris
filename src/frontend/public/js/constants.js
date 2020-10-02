@@ -1,13 +1,12 @@
 const WIDTH = 10
 const HEIGHT = 20
-const FPS = 60
 const NUM_PIECES = 7
 const STARTING_ROW = 0
 const STARTING_COL = 5
-const RIGHT = 0
-const LEFT = 1
-const ROT_RIGHT = 2
-const ROT_LEFT = 3
+const LEFT = 0
+const RIGHT = 1
+const ROT_LEFT = 2
+const ROT_RIGHT = 3
 
 const FRAMES_PER_CELL_BY_LEVEL = {
     0: 48,
@@ -34,11 +33,11 @@ const FRAMES_PER_CELL_BY_LEVEL = {
 }
 
 class Tetromino {
-    cells : string[][]
-    highestBlockRow : number
-    lowestBlockRow : number
+    cells
+    highestBlockRow
+    lowestBlockRow
 
-    constructor(repr : string[][]) {
+    constructor(repr) {
         this.cells = repr
         this.highestBlockRow = this.getHighestBlockRow()
         this.lowestBlockRow = this.getLowestBlockRow()
@@ -64,7 +63,7 @@ class Tetromino {
         }
     }
 
-    rotateLeft() : Tetromino {
+    rotateLeft() {
         const N = this.cells.length
         let mat = [...Array(N)].map(_=>Array(N).fill(' '))
         for (let i = 0; i < N; i++) {
@@ -78,7 +77,7 @@ class Tetromino {
         return new Tetromino(mat)
     }
 
-    rotateRight() : Tetromino {
+    rotateRight() {
         const N = this.cells.length
         let mat = [...Array(N)].map(_=>Array(N).fill(' '))
         for (let i = 0; i < N; i++) {
@@ -92,11 +91,11 @@ class Tetromino {
         return new Tetromino(mat)
     }
 
-    get(row: number, col : number) : string {
+    get(row, col) {
         return this.cells[row][col]
     }
 
-    size() : number {
+    size() {
         return this.cells.length
     }
 }
@@ -140,18 +139,18 @@ const SHAPES = {
     ])
 }
 
-const getRandomPiece = function() : Tetromino {
+const getRandomPiece = function() {
     return SHAPES[INT_TO_SHAPE[Math.floor(Math.random() * NUM_PIECES)]]
 }
 
 class GameState {
-    field = [HEIGHT][WIDTH]
-    currentPiece : Tetromino
-    nextPiece : Tetromino
-    pieceRow : number
-    pieceCol : number
-    level : number
-    currentFrame : number
+    field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
+    currentPiece
+    nextPiece
+    pieceRow
+    pieceCol
+    level
+    currentFrame = 0
 
     constructor(level = 0) {
         this.level = level
@@ -161,19 +160,19 @@ class GameState {
         this.pieceCol = STARTING_COL
     }
 
-    update(framesPassed: number, input : number) {
+    update(framesPassed, input) {
         this.currentFrame += framesPassed
         const numMoves = this.currentFrame % FRAMES_PER_CELL_BY_LEVEL[this.level]
-        this.parseInput(input)
         if (numMoves > 0) {
             for (let i = 0; i < numMoves; i++) {
                 this.move()
             }
+            this.parseInput(input)
             this.currentFrame -= FRAMES_PER_CELL_BY_LEVEL[this.level] * numMoves
         }
     }
 
-    parseInput(input: number) {
+    parseInput(input) {
         switch (input) {
             case LEFT:
                 this.pieceCol--
@@ -197,7 +196,7 @@ class GameState {
         }
     }
 
-    touchesGround() : boolean {
+    touchesGround() {
         if (this.currentPiece.lowestBlockRow + this.pieceRow + 1 >= HEIGHT) {
             return true
         }
@@ -224,8 +223,28 @@ class GameState {
         const size = this.currentPiece.size()
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
-                this.field[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.get(row, col)
+                if (this.pieceRow + row >= 0) {
+                    if (this.currentPiece.get(row, col) === '-')
+                        this.field[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.get(row, col)
+                }
             }
         }
+    }
+
+    getField() {
+        let mat = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(false))
+        const size = this.currentPiece.size()
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                if (this.pieceRow + row >= 0)
+                    mat[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.get(row, col) === '-'
+            }
+        }
+        for (let row = 0; row < HEIGHT; row++) {
+            for (let col = 0; col < WIDTH; col++) {
+                mat[row][col] = mat[row][col] || this.field[row][col] === '-'
+            }
+        }
+        return mat
     }
 }
