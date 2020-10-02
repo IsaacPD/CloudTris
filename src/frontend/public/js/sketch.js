@@ -1,12 +1,17 @@
 const game = new GameState(7)
 const BLOCK_SIZE = 10
+let dir = -1
+let rot = -1
 
 function setup() {
     frameRate(60)
     createCanvas(400, 400);
 }
 
+
 function draw() {
+    game.update(1, dir, rot)
+    rot = -1
     background(220)
     noFill()
     rect(0, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
@@ -23,12 +28,23 @@ function draw() {
             }
         }
     }
-    let input = -1
-    if (keyIsDown(LEFT_ARROW)) {
-        input = 0
+}
+
+function keyPressed() {
+    if (keyCode === LEFT_ARROW) {
+        dir = 0
+    } else if (keyCode === RIGHT_ARROW) {
+        dir = 1
     }
-    if (keyIsDown(RIGHT_ARROW)) {
-        input = 1
+    if (key === 'z') {
+        rot = 2
+    } else if (key === 'x') {
+        rot = 3
     }
-    game.update(1, input)
+}
+
+function keyReleased() {
+    if (keyCode === LEFT_ARROW || keyCode === RIGHT_ARROW) {
+        dir = -1
+    }
 }

@@ -7,6 +7,7 @@ const LEFT = 0
 const RIGHT = 1
 const ROT_LEFT = 2
 const ROT_RIGHT = 3
+const AUTO_SHIFT_DELAY = 16
 
 const FRAMES_PER_CELL_BY_LEVEL = {
     0: 48,
@@ -151,6 +152,7 @@ class GameState {
     pieceCol
     level
     currentFrame = 0
+    autoShiftFrame = 16
 
     constructor(level = 0) {
         this.level = level
@@ -160,26 +162,40 @@ class GameState {
         this.pieceCol = STARTING_COL
     }
 
-    update(framesPassed, input) {
+    update(framesPassed, dir, rot) {
         this.currentFrame += framesPassed
-        const numMoves = this.currentFrame % FRAMES_PER_CELL_BY_LEVEL[this.level]
+        const numMoves = this.currentFrame / FRAMES_PER_CELL_BY_LEVEL[this.level]
         if (numMoves > 0) {
-            for (let i = 0; i < numMoves; i++) {
+            for (let i = 0; i < Math.floor(numMoves); i++) {
                 this.move()
             }
-            this.parseInput(input)
-            this.currentFrame -= FRAMES_PER_CELL_BY_LEVEL[this.level] * numMoves
+            this.parseInput(dir, rot)
+            this.currentFrame -= FRAMES_PER_CELL_BY_LEVEL[this.level] * Math.floor(numMoves)
         }
     }
 
-    parseInput(input) {
-        switch (input) {
-            case LEFT:
-                this.pieceCol--
-                break
-            case RIGHT:
-                this.pieceCol++
-                break
+    parseInput(dir, rot) {
+        if (dir !== -1) {
+            if (this.autoShiftFrame === 0 || this.autoShiftFrame === 16) {
+                switch (dir) {
+                    case LEFT:
+                        this.pieceCol--
+                        break
+                    case RIGHT:
+                        this.pieceCol++
+                        break
+                }
+                if (this.autoShiftFrame === 16) {
+                    this.autoShiftFrame -= 6
+                }
+            }
+            if (this.autoShiftFrame < 16) {
+                this.autoShiftFrame++
+            }
+        } else {
+            this.autoShiftFrame = 0
+        }
+        switch (rot) {
             case ROT_RIGHT:
                 this.currentPiece = this.currentPiece.rotateRight()
                 break
