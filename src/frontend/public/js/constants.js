@@ -207,19 +207,24 @@ class GameState {
                 this.autoRepeatDrop = 1
             }
         } else if (held & (1 << DOWN) && !(held & (1 << RIGHT) || held & (1 << LEFT))) {
-            this.autoRepeatDrop++
+            if (this.autoRepeatDrop > 0)
+                this.autoRepeatDrop++
         } else if (this.autoRepeatDrop > 0) {
             this.autoRepeatDrop = 0
         }
 
-        if (pressed !== 0) {
+        if (held & (1 << RIGHT) || held & (1 << LEFT)) {
+            this.autoShiftFrame++
+            if (pressed & (1 << RIGHT) || pressed & (1 << LEFT)) {
+                this.autoShiftFrame = 0
+            }
             if (this.autoShiftFrame === 0 || this.autoShiftFrame === 16) {
-                if (pressed & (1 << LEFT)) {
+                if (held & (1 << LEFT)) {
                     this.pieceCol--
                     if (this.invalid())
                         this.pieceCol++
                 }
-                if (pressed & (1 << RIGHT)) {
+                if (held & (1 << RIGHT)) {
                     this.pieceCol++
                     if (this.invalid())
                         this.pieceCol--
@@ -228,12 +233,8 @@ class GameState {
                     this.autoShiftFrame = 10
                 }
             }
-            if (this.autoShiftFrame < 16) {
-                this.autoShiftFrame++
-            }
-        } else {
-            this.autoShiftFrame = 0
         }
+    
         switch (rot) {
             case ROT_RIGHT:
                 this.currentPiece = this.currentPiece.rotateRight()
@@ -301,6 +302,7 @@ class GameState {
         }
         for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
             for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                if (this.pieceRow + row + 1 < 0) continue
                 if (this.currentPiece.get(row, col) === '-' && this.field[this.pieceRow + row + 1][this.pieceCol + col] !== ' ') {
                     return true
                 }
@@ -316,6 +318,10 @@ class GameState {
         this.nextPiece = getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
         this.pieceCol = STARTING_COL
+        this.autoRepeatDrop = 0
+        if (this.invalid()) {
+            this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
+        }
     }
 
     placePiece() {
