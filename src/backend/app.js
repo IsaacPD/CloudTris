@@ -1,10 +1,16 @@
 const express = require('express')
 const app = express()
 const routes = require('./routes')
+const http = require('http').createServer(app)
+const io = require('socket.io')(http)
+const {connectToMongoDB} = require('./routes/models')
 const PORT = process.env.PORT
-const messages = require('./routes/messages')
 
 app.use('/', routes)
+
+io.on('connection', (socket) => {
+  console.log("Got connection ")
+})
 
 // Application will fail if environment variables are not set
 if(!process.env.PORT) {
@@ -20,7 +26,7 @@ if(!process.env.CLOUDTRIS_DB_ADDR) {
 }
 
 // Connect to MongoDB, will retry only once
-messages.connectToMongoDB()
+connectToMongoDB()
 
 // Starts an http server on the $PORT environment variable
 app.listen(PORT, () => {

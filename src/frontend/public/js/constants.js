@@ -43,13 +43,6 @@ const DROP_SPEED_BY_LEVEL = {
 }
 
 class Tetromino {
-    cells
-    highestBlockRow
-    lowestBlockRow
-    letfmostBlockCol
-    righmostBlockCol
-    color
-
     constructor(repr, color) {
         this.cells = repr
         this.highestBlockRow = this.getHighestBlockRow()
@@ -175,22 +168,17 @@ const getRandomPiece = function() {
 }
 
 class GameState {
-    field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
-    currentPiece
-    nextPiece
-    pieceRow
-    pieceCol
-    level
-    fallTimer = 0
-    autoShiftFrame = 16
-    autoRepeatDrop = -96
 
     constructor(level = 0) {
+        this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         this.level = level
         this.currentPiece = getRandomPiece()
         this.nextPiece = getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
         this.pieceCol = STARTING_COL
+        this.fallTimer = 0
+        this.autoShiftFrame = 16
+        this.autoRepeatDrop = -96
     }
 
     update(framesPassed, pressed, held, rot) {
@@ -384,3 +372,5 @@ class GameState {
         return mat
     }
 }
+
+module.exports = GameState

@@ -6,7 +6,7 @@ const axios = require('axios')
 
 const CLOUDTRIS_API_ADDR = process.env.CLOUDTRIS_API_ADDR
 
-const BACKEND_URI = `http://${CLOUDTRIS_API_ADDR}/messages`
+const BACKEND_URI = `http://${CLOUDTRIS_API_ADDR}`
 
 app.set("view engine", "pug")
 app.set("views", path.join(__dirname, "views"))
@@ -15,6 +15,7 @@ const router = express.Router()
 app.use(router)
 
 app.use(express.static('public'))
+app.use('/dist', express.static('dist'))
 router.use(bodyParser.urlencoded({ extended: false }))
 
 // Application will fail if environment variables are not set
@@ -39,5 +40,5 @@ app.listen(PORT, () => {
 
 // Handles GET request to /
 router.get("/", (req, res) => {
-    res.render("home")
+    res.render("home", {BACKEND_URL: BACKEND_URI})
 });

@@ -1,27 +1,37 @@
-const game = new GameState(7)
+const io = require('socket.io-client')
+const $ = require('jquery')
+const GameState = require('./constants')
+
+const playerOne = new GameState(7)
+const playerTwo = new GameState(7)
 const BLOCK_SIZE = 20
 let held = 0
 let pressed = 0
 let rot = -1
 let pause = false
 
+$(document).ready(() => {
+    const URL = $('#url')
+    console.log(URL)
+    const socket = io("localhost:8081")
+})
+
 function setup() {
     frameRate(60)
     createCanvas(400, 400);
 }
 
-
 function draw() {
     if (pause) {
         return
     }
-    game.update(1, pressed, held, rot)
+    playerOne.update(1, pressed, held, rot)
     pressed = 0
     rot = -1
     background(220)
     noFill()
     rect(0, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
-    let field = game.getField()
+    let field = playerOne.getField()
     for (let row = 0; row < field.length; row++) {
         for (let col = 0; col < field[0].length; col++) {
             let x = col * BLOCK_SIZE
