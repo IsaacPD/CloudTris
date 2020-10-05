@@ -252,7 +252,10 @@ class GameState {
          for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
             for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
                 if (this.pieceRow + row < 0) continue
+                if (this.currentPiece.get(row, col) !== '-') continue
                 if (this.field[this.pieceRow + row][this.pieceCol + col] !== ' ') {
+                    console.log(row, col, this.pieceRow + row, this.pieceCol + col)
+                    console.log(this.field)
                     return true
                 }
             }
@@ -269,38 +272,23 @@ class GameState {
         if (this.autoRepeatDrop === 3) {
             this.autoRepeatDrop = 1
             this.fallTimer = 0
-            if (this.touchesGround()) {
+            this.pieceRow++
+            if (this.invalid()) {
+                this.pieceRow--
                 this.lockPiece()
-            } else {
-                this.pieceRow++
             }
             return
         }
 
         const dropSpeed = this.level >= 29 ? 1 : this.level > 19 ? 2 : DROP_SPEED_BY_LEVEL[this.level]
         if (this.fallTimer > dropSpeed) {
-            if (this.touchesGround()) {
+            this.pieceRow++
+            if (this.invalid()) {
+                this.pieceRow--
                 this.lockPiece()
-            } else {
-                this.pieceRow++
             }
             this.fallTimer = 0
         }
-    }
-
-    touchesGround() {
-        if (this.currentPiece.lowestBlockRow + this.pieceRow + 1 >= HEIGHT) {
-            return true
-        }
-        for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
-            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
-                if (this.pieceRow + row + 1 < 0) continue
-                if (this.currentPiece.get(row, col) === '-' && this.field[this.pieceRow + row + 1][this.pieceCol + col] !== ' ') {
-                    return true
-                }
-            }
-        }
-        return false
     }
 
     lockPiece() {
