@@ -8,8 +8,36 @@ const PORT = process.env.PORT
 
 app.use('/', routes)
 
+let players = 0
+let numReady = 0
+
 io.on('connection', (socket) => {
-  console.log("Got connection ")
+  players++
+  
+  io.emit('num_players', players)
+  
+  socket.on('disconnect', () => {
+    players--
+    numReady = 0
+  })
+
+  socket.on('ready', (isReady) => {
+    if (isReady) {
+      numReady++
+    }
+
+    if (numReady === 2) {
+      io.emit('start', 84)
+    }
+  })
+
+  socket.on('press', (key) => {
+    socket.broadcast.emit('press', key)
+  })
+
+  socket.on('release', (keyCode) => {
+    socket.broadcast.emit('release', keyCode)    
+  })
 })
 
 // Application will fail if environment variables are not set
@@ -29,7 +57,7 @@ if(!process.env.CLOUDTRIS_DB_ADDR) {
 connectToMongoDB()
 
 // Starts an http server on the $PORT environment variable
-app.listen(PORT, () => {
+http.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');
 });

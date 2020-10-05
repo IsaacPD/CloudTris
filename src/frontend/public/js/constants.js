@@ -163,22 +163,23 @@ const SHAPES = {
     ], T_COLOR)
 }
 
-const getRandomPiece = function() {
-    return SHAPES[INT_TO_SHAPE[Math.floor(Math.random() * NUM_PIECES)]]
-}
-
 class GameState {
 
-    constructor(level = 0) {
+    constructor(level = 0, seed) {
         this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         this.level = level
-        this.currentPiece = getRandomPiece()
-        this.nextPiece = getRandomPiece()
+        this.random = new Random(Random.engines.mt19937().seed(seed))
+        this.currentPiece = this.getRandomPiece()
+        this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
         this.pieceCol = STARTING_COL
         this.fallTimer = 0
         this.autoShiftFrame = 16
         this.autoRepeatDrop = -96
+    }
+
+    getRandomPiece = function() {
+        return SHAPES[INT_TO_SHAPE[this.random.integer(0, 6)]]
     }
 
     update(framesPassed, pressed, held, rot) {
@@ -303,7 +304,7 @@ class GameState {
         this.placePiece()
         this.clearLines()
         this.currentPiece = this.nextPiece
-        this.nextPiece = getRandomPiece()
+        this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
         this.pieceCol = STARTING_COL
         this.autoRepeatDrop = 0
@@ -372,5 +373,3 @@ class GameState {
         return mat
     }
 }
-
-module.exports = GameState

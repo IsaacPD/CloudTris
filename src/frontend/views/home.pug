@@ -7,15 +7,17 @@ html
         link(rel='stylesheet', href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T', crossorigin='anonymous')
         link(rel='stylesheet', href='css/style.css')
         link(rel='stylesheet', href='https://fonts.googleapis.com/css?family=Roboto')
-        script(src='https://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js')
         script(src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js")
+        script(src="https://cdn.socket.io/socket.io-2.3.0.js")
+        script(src="js/random.min.js")
+        script(src="js/constants.js")
+        script(src="js/sketch.js")
     body
         .header
             .container
                 h1 
                     a(href='/') Cloud Tetris
-                p(id="url") #{BACKEND_URL}
+                p(id="url", style="display: none") #{BACKEND_URL}
         .container.posts.mt-0
             main
-            script(src="dist/game.bundle.js")
 
