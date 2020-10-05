@@ -176,6 +176,8 @@ class GameState {
         this.fallTimer = 0
         this.autoShiftFrame = 16
         this.autoRepeatDrop = -96
+        this.linesToNextLevel = this.level * 10 + 10
+        this.totalLines = 0
     }
 
     getRandomPiece = function() {
@@ -275,7 +277,8 @@ class GameState {
             return
         }
 
-        if (this.fallTimer > DROP_SPEED_BY_LEVEL[this.level]) {
+        const dropSpeed = this.level >= 29 ? 1 : this.level > 19 ? 2 : DROP_SPEED_BY_LEVEL[this.level]
+        if (this.fallTimer > dropSpeed) {
             if (this.touchesGround()) {
                 this.lockPiece()
             } else {
@@ -344,6 +347,13 @@ class GameState {
                 continue
             }
             this.moveRowDown(row, numRowsCleared)
+        }
+        this.linesToNextLevel -= numRowsCleared
+        this.totalLines += numRowsCleared
+
+        if (this.linesToNextLevel < 0) {
+            this.linesToNextLevel = 10 - this.linesToNextLevel
+            this.level++
         }
     }
 
