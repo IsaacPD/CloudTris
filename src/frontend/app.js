@@ -1,6 +1,7 @@
 const express = require('express')
 const path = require('path');
 const app = express();
+const logger = require('morgan')
 const bodyParser = require('body-parser')
 const axios = require('axios')
 
@@ -13,7 +14,7 @@ app.set("views", path.join(__dirname, "views"))
 
 const router = express.Router()
 app.use(router)
-
+app.use(logger('dev'))
 app.use(express.static('public'))
 app.use('/dist', express.static('dist'))
 router.use(bodyParser.urlencoded({ extended: false }))

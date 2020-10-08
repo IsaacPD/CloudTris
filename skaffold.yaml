@@ -1,14 +1,15 @@
 apiVersion: skaffold/v2beta4
 kind: Config
 build:
-  tagPolicy:
-    sha256: {}
-  # defines where to find the code at build time and where to push the resulting image
   artifacts:
   - image: nodejs-cloudtris-backend
     context: src/backend
+    buildpack:
+      builder: "gcr.io/buildpacks/builder:v1"
   - image: nodejs-cloudtris-frontend
     context: src/frontend
+    buildpack:
+      builder: "gcr.io/buildpacks/builder:v1"
 # defines the Kubernetes manifests to deploy on each run
 deploy:
   kubectl:
@@ -20,14 +21,13 @@ profiles:
 - name: cloudbuild
   build:
     googleCloudBuild: {}
-- name: buildpacks
+- name: docker
   build:
+    tagPolicy:
+      sha256: {}
+    # defines where to find the code at build time and where to push the resulting image
     artifacts:
     - image: nodejs-cloudtris-backend
       context: src/backend
-      buildpack:
-        builder: "gcr.io/buildpacks/builder:v1"
     - image: nodejs-cloudtris-frontend
       context: src/frontend
-      buildpack:
-        builder: "gcr.io/buildpacks/builder:v1"

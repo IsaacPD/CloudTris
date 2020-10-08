@@ -178,6 +178,7 @@ class GameState {
         this.autoRepeatDrop = -96
         this.linesToNextLevel = this.level * 10 + 10
         this.totalLines = 0
+        this.gameOver = 0
     }
 
     getRandomPiece = function() {
@@ -187,7 +188,7 @@ class GameState {
     update(framesPassed, pressed, held, rot) {
         this.fallTimer += framesPassed
         this.parseInput(pressed, held, rot)
-        this.move(framesPassed)
+        return this.move(framesPassed)
     }
 
     parseInput(pressed, held, rot) {
@@ -267,7 +268,7 @@ class GameState {
     move(framesPassed) {
         if (this.autoRepeatDrop < 0) {
             this.autoRepeatDrop += framesPassed
-            return
+            return false
         }
         if (this.autoRepeatDrop === 3) {
             this.autoRepeatDrop = 1
@@ -276,8 +277,9 @@ class GameState {
             if (this.invalid()) {
                 this.pieceRow--
                 this.lockPiece()
+                return true
             }
-            return
+            return false
         }
 
         const dropSpeed = this.level >= 29 ? 1 : this.level > 19 ? 2 : DROP_SPEED_BY_LEVEL[this.level]
@@ -286,9 +288,11 @@ class GameState {
             if (this.invalid()) {
                 this.pieceRow--
                 this.lockPiece()
+                return true
             }
             this.fallTimer = 0
         }
+        return false
     }
 
     lockPiece() {
@@ -300,6 +304,7 @@ class GameState {
         this.pieceCol = STARTING_COL
         this.autoRepeatDrop = 0
         if (this.invalid()) {
+            this.gameOver++
             this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         }
     }

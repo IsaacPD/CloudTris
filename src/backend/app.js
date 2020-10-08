@@ -1,12 +1,14 @@
 const express = require('express')
 const app = express()
 const routes = require('./routes')
+const logger = require('morgan')
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 const {connectToMongoDB} = require('./routes/models')
 const PORT = process.env.PORT
 
 app.use('/', routes)
+app.use(logger('dev'))
 
 let players = 0
 let numReady = 0
@@ -27,7 +29,7 @@ io.on('connection', (socket) => {
     }
 
     if (numReady === 2) {
-      io.emit('start', 84)
+      io.emit('start', Math.random() * (((1 << 30) * 2) - 1))
     }
   })
 
@@ -37,6 +39,10 @@ io.on('connection', (socket) => {
 
   socket.on('release', (keyCode) => {
     socket.broadcast.emit('release', keyCode)    
+  })
+
+  socket.on('state', (field) => {
+    socket.broadcast.emit('state', field)
   })
 })
 
