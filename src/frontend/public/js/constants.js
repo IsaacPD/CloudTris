@@ -50,13 +50,15 @@ const DROP_SPEED_BY_LEVEL = {
 }
 
 class Tetromino {
-    constructor(repr, color) {
+    constructor(repr, color, shape, spawnCol) {
         this.cells = repr
         this.highestBlockRow = this.getHighestBlockRow()
         this.lowestBlockRow = this.getLowestBlockRow()
         this.letfmostBlockCol = this.getLeftmostBlockCol()
         this.righmostBlockCol = this.getRightmostBlockCol()
         this.color = color
+        this.shape = shape
+        this.spawnCol = spawnCol
     }
 
     getLeftmostBlockCol() {
@@ -107,7 +109,7 @@ class Tetromino {
                 mat[i][j] = this.cells[j][N - i - 1]
             }
         }
-        return new Tetromino(mat, this.color)
+        return new Tetromino(mat, this.color, this.shape)
     }
 
     rotateRight() {
@@ -118,7 +120,7 @@ class Tetromino {
                 mat[i][j] = this.cells[N - j - 1][i]
             }
         }
-        return new Tetromino(mat, this.color)
+        return new Tetromino(mat, this.color, this.shape)
     }
 
     get(row, col) {
@@ -136,38 +138,38 @@ const SHAPES = {
     O : new Tetromino([
         ['-', '-'],
         ['-', '-']
-    ], O_COLOR),
+    ], O_COLOR, "O", 1),
     I : new Tetromino([
         [' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' '],
         ['-', '-', '-', '-'],
         [' ', ' ', ' ', ' ']
-    ], I_COLOR),
+    ], I_COLOR, "I", 2),
     J : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         [' ', ' ', '-']
-    ], J_COLOR),
+    ], J_COLOR, "J", 1),
     L : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         ['-', ' ', ' ']
-    ], L_COLOR),
+    ], L_COLOR, "L", 1),
     Z : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', ' '],
         [' ', '-', '-']
-    ], Z_COLOR),
+    ], Z_COLOR, "Z", 1),
     S : new Tetromino([
         [' ', ' ', ' '],
         [' ', '-', '-'],
         ['-', '-', ' ']
-    ], S_COLOR),
+    ], S_COLOR, "S", 1),
     T : new Tetromino([
         [' ', ' ', ' '],
         ['-', '-', '-'],
         [' ', '-', ' ']
-    ], T_COLOR)
+    ], T_COLOR, "T", 1)
 }
 
 class LCG {
@@ -189,12 +191,16 @@ class GameState {
 
     constructor(level = 0, seed) {
         this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
+        this.stats = {}
+        for (let shape in SHAPES) {
+            this.stats[shape] = 0
+        }
         this.level = level
         this.random = new LCG(seed)
         this.currentPiece = this.getRandomPiece()
         this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
-        this.pieceCol = STARTING_COL
+        this.pieceCol = STARTING_COL - this.currentPiece.spawnCol
         this.fallTimer = 0
         this.autoShiftFrame = 16
         this.autoRepeatDrop = -96
@@ -202,6 +208,7 @@ class GameState {
         this.totalLines = 0
         this.gameOver = 0
         this.score = 0
+        this.stats[this.currentPiece.shape]++
     }
 
     setSeed(seed) {
@@ -213,7 +220,7 @@ class GameState {
     }
 
     getRandomPiece = function() {
-        return SHAPES[INT_TO_SHAPE[this.random.integer(0, 6)]]
+        return SHAPES[INT_TO_SHAPE[this.random.integer(0, 7)]]
     }
 
     update(framesPassed, pressed, held, rot) {
@@ -330,8 +337,9 @@ class GameState {
         this.currentPiece = this.nextPiece
         this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
-        this.pieceCol = STARTING_COL
+        this.pieceCol = STARTING_COL - this.currentPiece.spawnCol
         this.autoRepeatDrop = 0
+        this.stats[this.currentPiece.shape]++
         if (this.invalid()) {
             this.gameOver++
             this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))

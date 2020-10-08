@@ -1,5 +1,5 @@
 const BLOCK_SIZE = 20
-const PLAYER_TWO_START = BLOCK_SIZE * WIDTH
+const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + 150
 const SHIFT_LEFT = 1, SHIFT_RIGHT = 2, DROP_DOWN = 3, ROTATE_LEFT = 4, ROTATE_RIGHT = 5, PAUSE = 6
 
 const KeyToInput = {
@@ -26,24 +26,24 @@ let p2Game = undefined
 
 function setup() {
     frameRate(60)
-    createCanvas(400, 500);
+    createCanvas(800, 500);
 }
 
 function draw() {
+    textStyle(BOLD);
+    textSize(16)
     background(220)
     noFill()
     rect(0, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
     rect(PLAYER_TWO_START, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
 
     if (!p1Game || !p2Game) {
-        textSize(16)
         fill("black")
         text('Waiting for Player Two...', PLAYER_TWO_START, BLOCK_SIZE * HEIGHT / 2)
         return
     }
 
     if (pause) {
-        textSize(16)
         fill("black")
         text('Game Paused, Press Space To Unpause', 0, BLOCK_SIZE * HEIGHT + 30)
         return
@@ -80,10 +80,34 @@ function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
             }
         }
     }
-    textSize(16)
     fill("black")
     text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
     text(`Level: ${game.level}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
+    
+    textSize(20)
+    let yOffset = BLOCK_SIZE * 5
+    for (let key in game.stats) {
+        let shape = SHAPES[key]
+        drawTetromino(shape, xOffset + BLOCK_SIZE * WIDTH + 10, yOffset)
+        fill("black")
+        text(`: ${game.stats[key]}`, xOffset + BLOCK_SIZE * (WIDTH + 5), yOffset + (shape.lowestBlockRow - shape.highestBlockRow + 1) * BLOCK_SIZE / 2)
+        yOffset += (shape.lowestBlockRow - shape.highestBlockRow + 2) * BLOCK_SIZE
+    }
+
+    drawTetromino(game.nextPiece, xOffset + BLOCK_SIZE * WIDTH + 30, BLOCK_SIZE * 2)
+    fill("black")
+    text('NEXT', xOffset + BLOCK_SIZE * WIDTH + 30, BLOCK_SIZE)
+}
+
+function drawTetromino(shape, xOffset, yOffset) {
+    for (let row = shape.highestBlockRow; row <= shape.lowestBlockRow; row++) {
+        for (let col = shape.letfmostBlockCol; col <= shape.righmostBlockCol; col++) {
+            if (shape.get(row, col) === ' ') continue
+            fill(color(shape.color.r, shape.color.g, shape.color.b))
+            rect(xOffset + BLOCK_SIZE * (col - shape.letfmostBlockCol), 
+                 yOffset + BLOCK_SIZE * (row - shape.highestBlockRow), BLOCK_SIZE, BLOCK_SIZE)
+        }
+    }
 }
 
 function keyPressed() {
@@ -162,6 +186,5 @@ socket.on('release', (keyCode) => {
 socket.on('state', (state) => {
     p2Game.field = state.field
     p2Game.totalLines = state.totalLines
-    p2Game.setSeed(state.seed)
     p2Game.score = state.score
 })
