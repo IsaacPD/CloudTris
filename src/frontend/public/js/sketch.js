@@ -60,7 +60,12 @@ function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
     let field = game.getField()
 
     if (pieceLocked && emitLocked) {
-        socket.emit('state', {field: p1Game.field, totalLines: p1Game.totalLines})
+        socket.emit('state', {
+            field: game.field,
+            totalLines: game.totalLines,
+            score: game.score,
+            seed: game.getSeed()
+        })
     }
     
     for (let row = 0; row < field.length; row++) {
@@ -77,8 +82,8 @@ function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
     }
     textSize(16)
     fill("black")
-    text(`Lines Cleared: ${game.totalLines}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
-    text(`Game Overs: ${game.gameOver}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
+    text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
+    text(`Level: ${game.level}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
 }
 
 function keyPressed() {
@@ -157,4 +162,6 @@ socket.on('release', (keyCode) => {
 socket.on('state', (state) => {
     p2Game.field = state.field
     p2Game.totalLines = state.totalLines
+    p2Game.setSeed(state.seed)
+    p2Game.score = state.score
 })

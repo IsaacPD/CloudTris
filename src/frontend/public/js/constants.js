@@ -10,6 +10,13 @@ const ROT_LEFT = 0
 const ROT_RIGHT = 1
 const AUTO_SHIFT_DELAY = 16
 
+const LINES_TO_MULTIPLIER = {
+    1: 40,
+    2: 100,
+    3: 300,
+    4: 1200
+}
+
 T_COLOR = {r: 241, g: 3, b: 3}
 J_COLOR = {r: 255, g: 218, b: 0}
 Z_COLOR = {r: 72, g: 254, b: 2}
@@ -163,12 +170,27 @@ const SHAPES = {
     ], T_COLOR)
 }
 
+class LCG {
+    constructor(seed) {
+        this.s = seed
+    }
+    
+    random() {
+        this.s = Math.imul(48271, this.s) | 0 % 2147483647;
+        return (this.s & 2147483647) / 2147483648;
+    }
+    
+    integer(min, max) {
+        return (Math.floor(this.random() * max)) + min
+    }
+}
+
 class GameState {
 
     constructor(level = 0, seed) {
         this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         this.level = level
-        this.random = new Random(Random.engines.mt19937().seed(seed))
+        this.random = new LCG(seed)
         this.currentPiece = this.getRandomPiece()
         this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
@@ -179,6 +201,15 @@ class GameState {
         this.linesToNextLevel = this.level * 10 + 10
         this.totalLines = 0
         this.gameOver = 0
+        this.score = 0
+    }
+
+    setSeed(seed) {
+        this.random = new LCG(seed)
+    }
+
+    getSeed() {
+        return this.random.s
     }
 
     getRandomPiece = function() {
@@ -255,8 +286,6 @@ class GameState {
                 if (this.pieceRow + row < 0) continue
                 if (this.currentPiece.get(row, col) !== '-') continue
                 if (this.field[this.pieceRow + row][this.pieceCol + col] !== ' ') {
-                    console.log(row, col, this.pieceRow + row, this.pieceCol + col)
-                    console.log(this.field)
                     return true
                 }
             }
@@ -348,6 +377,8 @@ class GameState {
             this.linesToNextLevel = 10 - this.linesToNextLevel
             this.level++
         }
+        if (numRowsCleared > 0)
+            this.score += LINES_TO_MULTIPLIER[numRowsCleared] * (this.level + 1)
     }
 
     moveRowDown(row, numDown) {
