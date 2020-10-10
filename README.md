@@ -4,10 +4,7 @@ Play Tetris right in your browser against one other person, a (hopefully) accura
 
 Features Missing
 ----------------
-1. Next Piece
-2. Piece Statistics
-3. Scoring
-4. Good Multiplayer
+1. Good Multiplayer
 
 Features Planned
 ----------------

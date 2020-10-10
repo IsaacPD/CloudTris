@@ -208,6 +208,7 @@ class GameState {
         this.totalLines = 0
         this.gameOver = 0
         this.score = 0
+        this.highScore = 0
         this.stats[this.currentPiece.shape]++
     }
 
@@ -342,6 +343,11 @@ class GameState {
         this.stats[this.currentPiece.shape]++
         if (this.invalid()) {
             this.gameOver++
+            if (this.score > this.highScore) {
+                this.highScore = this.score
+            }
+            this.level = 7
+            this.score = 0
             this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         }
     }

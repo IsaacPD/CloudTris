@@ -1,14 +1,14 @@
 const BLOCK_SIZE = 20
 const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + 150
-const SHIFT_LEFT = 1, SHIFT_RIGHT = 2, DROP_DOWN = 3, ROTATE_LEFT = 4, ROTATE_RIGHT = 5, PAUSE = 6
+const SHIFT_LEFT = "SHIFT_LEFT", SHIFT_RIGHT = "SHIFT_RIGHT", DROP_DOWN = "DROP_DOWN", ROTATE_LEFT = "ROTATE_LEFT", ROTATE_RIGHT = "ROTATE_RIGHT", PAUSE = "PAUSE"
 
 const KeyToInput = {
-    "ArrowLeft"  : SHIFT_LEFT,
-    "ArrowRight" : SHIFT_RIGHT,
-    "ArrowDown"  : DROP_DOWN,
-    "z" : ROTATE_LEFT,
-    'x' : ROTATE_RIGHT,
-    ' ' : PAUSE
+    SHIFT_LEFT : "ArrowLeft",
+    SHIFT_RIGHT : "ArrowRight",
+    DROP_DOWN : "ArrowDown",
+    ROTATE_LEFT : "z",
+    ROTATE_RIGHT : "x",
+    PAUSE : " "
 }
 class Player {
     constructor() {
@@ -64,7 +64,10 @@ function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
             field: game.field,
             totalLines: game.totalLines,
             score: game.score,
-            seed: game.getSeed()
+            seed: game.getSeed(),
+            highScore: game.highScore,
+            level: game.level,
+            gameOver: game.gameOver
         })
     }
     
@@ -80,9 +83,11 @@ function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
             }
         }
     }
+    textSize(16)
     fill("black")
     text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
-    text(`Level: ${game.level}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
+    text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
+    text(`High Score: ${game.highScore}`, xOffset, BLOCK_SIZE * HEIGHT + 70)
     
     textSize(20)
     let yOffset = BLOCK_SIZE * 5
@@ -111,15 +116,25 @@ function drawTetromino(shape, xOffset, yOffset) {
 }
 
 function keyPressed() {
-    if (!KeyToInput[key]) return
-    socket.emit('press', KeyToInput[key])
-    setPlayerInput(p1, KeyToInput[key])
+    let input = getInput(key)
+    if (!input) return
+    socket.emit('press', input)
+    setPlayerInput(p1, input)
 }
 
 function keyReleased() {
-    if (!KeyToInput[key]) return
-    socket.emit('release', KeyToInput[key])
-    releasePlayerInput(p1, KeyToInput[key])
+    let input = getInput(key)
+    if (!input) return
+    socket.emit('release', input)
+    releasePlayerInput(p1, input)
+}
+
+function getInput(key) {
+    for (let input in KeyToInput) {
+        if (KeyToInput[input] === key)
+            return input
+    }
+    return undefined
 }
 
 function setPlayerInput(player, input) {
@@ -171,8 +186,8 @@ socket.on('num_players', (num_players) => {
 })
 
 socket.on('start', (seed) => {
-    p1Game = new GameState(5, seed)
-    p2Game = new GameState(5, seed)
+    p1Game = new GameState(7, seed)
+    p2Game = new GameState(7, seed)
 })
 
 socket.on('press', (key => {
@@ -187,4 +202,7 @@ socket.on('state', (state) => {
     p2Game.field = state.field
     p2Game.totalLines = state.totalLines
     p2Game.score = state.score
+    p2Game.highScore = state.highScore
+    p2Game.level = state.level
+    p2Game.gameOver = state.gameOver
 })
