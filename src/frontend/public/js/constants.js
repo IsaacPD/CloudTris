@@ -257,13 +257,19 @@ class GameState {
             if (this.autoShiftFrame === 0 || this.autoShiftFrame === 16) {
                 if (held & (1 << LEFT)) {
                     this.pieceCol--
-                    if (this.invalid())
+                    if (this.invalid()) {
                         this.pieceCol++
+                    } else {
+                        window.dispatchEvent(new CustomEvent("sound", {detail: {type: "shift", player: this}}))
+                    }
                 }
                 if (held & (1 << RIGHT)) {
                     this.pieceCol++
-                    if (this.invalid())
+                    if (this.invalid()) {
                         this.pieceCol--
+                    } else {
+                        window.dispatchEvent(new CustomEvent("sound", {detail: {type: "shift", player: this}}))
+                    }
                 }
                 if (this.autoShiftFrame === 16) {
                     this.autoShiftFrame = 10
@@ -276,12 +282,16 @@ class GameState {
                 this.currentPiece = this.currentPiece.rotateRight()
                 if (this.invalid()) {
                     this.currentPiece = this.currentPiece.rotateLeft()
+                } else {
+                    window.dispatchEvent(new CustomEvent("sound", {detail: {type: "rotate", player: this}}))
                 }
                 break
             case ROT_LEFT:
                 this.currentPiece = this.currentPiece.rotateLeft()
                 if (this.invalid()) {
                     this.currentPiece = this.currentPiece.rotateRight()
+                } else {
+                    window.dispatchEvent(new CustomEvent("sound", {detail: {type: "rotate", player: this}}))
                 }
                 break
         }
@@ -346,6 +356,7 @@ class GameState {
         this.pieceCol = STARTING_COL - this.currentPiece.spawnCol
         this.autoRepeatDrop = 0
         this.stats[this.currentPiece.shape]++
+        window.dispatchEvent(new CustomEvent("sound", {detail: {type: "lock", player: this}}))
         if (this.invalid()) {
             this.gameOver++
             if (this.score > this.highScore) {
@@ -395,8 +406,14 @@ class GameState {
             this.linesToNextLevel = 10 - this.linesToNextLevel
             this.level++
         }
-        if (numRowsCleared > 0)
+        if (numRowsCleared > 0) {
             this.score += LINES_TO_MULTIPLIER[numRowsCleared] * (this.level + 1)
+            if (numRowsCleared < 4) {
+                window.dispatchEvent(new CustomEvent("sound", {detail: {type: "line", player: this}}))
+            } else {
+                window.dispatchEvent(new CustomEvent("sound", {detail: {type: "tetris", player: this}}))
+            }
+        }
     }
 
     moveRowDown(row, numDown) {

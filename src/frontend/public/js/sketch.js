@@ -1,5 +1,6 @@
 const BLOCK_SIZE = 20
-const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + 150
+const SPACE_IN_BETWEEN = BLOCK_SIZE * 8
+const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
 const SHIFT_LEFT = "SHIFT_LEFT", SHIFT_RIGHT = "SHIFT_RIGHT", DROP_DOWN = "DROP_DOWN", ROTATE_LEFT = "ROTATE_LEFT", ROTATE_RIGHT = "ROTATE_RIGHT", PAUSE = "PAUSE"
 
 const KeyToInput = {
@@ -26,7 +27,7 @@ let p2Game = undefined
 
 function setup() {
     frameRate(60)
-    createCanvas(800, 500);
+    createCanvas(2 * (BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), BLOCK_SIZE * (HEIGHT + 5));
 }
 
 function draw() {
@@ -129,6 +130,19 @@ function keyReleased() {
     releasePlayerInput(p1, input)
 }
 
+function preload() {
+    soundFormats('wav');
+    lineClearSound = loadSound('sound/line');
+    lockSound = loadSound('sound/lock');
+    rotateSound = loadSound('sound/rotate');
+    shiftSound = loadSound('sound/shift');
+    tetrisSound = loadSound('sound/tetris');
+}
+
+function mousePressed() {
+    userStartAudio();
+}
+
 function getInput(key) {
     for (let input in KeyToInput) {
         if (KeyToInput[input] === key)
@@ -206,4 +220,27 @@ socket.on('state', (state) => {
     p2Game.level = state.level
     p2Game.gameOver = state.gameOver
     p2Game.setSeed(state.seed)
+})
+
+window.addEventListener("sound", (e) => {
+    e = e.detail
+    if (e.player !== p1Game) return
+
+    switch (e.type) {
+        case "line":
+            lineClearSound.play()
+            break
+        case "rotate":
+            rotateSound.play()
+            break
+        case "shift":
+            shiftSound.play()
+            break
+        case "tetris":
+            tetrisSound.play()
+            break
+        case "lock":
+            lockSound.play()
+            break
+    }
 })
