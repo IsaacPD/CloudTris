@@ -195,8 +195,15 @@ class GameState {
         for (let shape in SHAPES) {
             this.stats[shape] = 0
         }
-        this.level = level
+        this.initLevel = level
         this.random = new LCG(seed)
+        this.gameOver = 0
+        this.highScore = 0
+        this.init()
+    }
+
+    init() {
+        this.level = this.initLevel
         this.currentPiece = this.getRandomPiece()
         this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
@@ -206,9 +213,7 @@ class GameState {
         this.autoRepeatDrop = -96
         this.linesToNextLevel = this.level * 10 + 10
         this.totalLines = 0
-        this.gameOver = 0
         this.score = 0
-        this.highScore = 0
         this.stats[this.currentPiece.shape]++
     }
 
@@ -346,8 +351,7 @@ class GameState {
             if (this.score > this.highScore) {
                 this.highScore = this.score
             }
-            this.level = 7
-            this.score = 0
+            this.init()
             this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         }
     }

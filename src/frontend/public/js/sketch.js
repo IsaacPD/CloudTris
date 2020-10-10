@@ -205,4 +205,5 @@ socket.on('state', (state) => {
     p2Game.highScore = state.highScore
     p2Game.level = state.level
     p2Game.gameOver = state.gameOver
+    p2Game.setSeed(state.seed)
 })
