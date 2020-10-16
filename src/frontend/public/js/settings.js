@@ -35,7 +35,7 @@ for (let input in KeyToInput) {
 		window.addEventListener("keydown", windowEvent)
 	})
 
-	let buttonCol = $("<td>").append($('<button/>', {text: input}))
+	let buttonCol = $("<td>").append($('<label/>', {text: input}))
 	let textInputCol = $("<td>").append(textInput)
 
 	row.append(buttonCol)

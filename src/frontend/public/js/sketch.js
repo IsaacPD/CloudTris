@@ -2,6 +2,9 @@ const BLOCK_SIZE = 20
 const SPACE_IN_BETWEEN = BLOCK_SIZE * 8
 const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
 const SHIFT_LEFT = "SHIFT_LEFT", SHIFT_RIGHT = "SHIFT_RIGHT", DROP_DOWN = "DROP_DOWN", ROTATE_LEFT = "ROTATE_LEFT", ROTATE_RIGHT = "ROTATE_RIGHT", PAUSE = "PAUSE"
+const MSPS = 1000
+const FPS = 60
+const SPF = 1 / 60
 
 const KeyToInput = {
     SHIFT_LEFT : "ArrowLeft",
@@ -26,11 +29,13 @@ let p1Game = undefined
 let p2Game = undefined
 
 function setup() {
-    frameRate(60)
     createCanvas(2 * (BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), BLOCK_SIZE * (HEIGHT + 5));
 }
 
 function draw() {
+    deltaSeconds = deltaTime / MSPS
+    frames = deltaSeconds * FPS
+    console.log(frames)
     textStyle(BOLD);
     textSize(16)
     background(220)
@@ -50,12 +55,12 @@ function draw() {
         return
     }
     
-    updateAndDrawGame(p1Game, p1, 0, true)
-    updateAndDrawGame(p2Game, p2, PLAYER_TWO_START)
+    updateAndDrawGame(p1Game, p1, 0, frames, true)
+    updateAndDrawGame(p2Game, p2, PLAYER_TWO_START, frames)
 }
 
-function updateAndDrawGame(game, player, xOffset, emitLocked = false) {
-    const pieceLocked = game.update(1, player.pressed, player.held, player.rot)
+function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
+    const pieceLocked = game.update(frames, player.pressed, player.held, player.rot)
     player.pressed = 0
     player.rot = -1
     let field = game.getField()
@@ -137,10 +142,6 @@ function preload() {
     rotateSound = loadSound('sound/rotate');
     shiftSound = loadSound('sound/shift');
     tetrisSound = loadSound('sound/tetris');
-}
-
-function mousePressed() {
-    userStartAudio();
 }
 
 function getInput(key) {

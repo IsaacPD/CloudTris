@@ -203,6 +203,7 @@ class GameState {
     }
 
     init() {
+        this.frameCount = 0
         this.level = this.initLevel
         this.currentPiece = this.getRandomPiece()
         this.nextPiece = this.getRandomPiece()
@@ -230,12 +231,14 @@ class GameState {
     }
 
     update(framesPassed, pressed, held, rot) {
+        this.frameCount += framesPassed
         this.fallTimer += framesPassed
         this.parseInput(pressed, held, rot)
         return this.move(framesPassed)
     }
 
     parseInput(pressed, held, rot) {
+        if (this.currentPiece === undefined) return
         if (pressed & (1 << DOWN)) {
             if (this.autoRepeatDrop < 0) {
                 this.autoRepeatDrop = 0
@@ -322,41 +325,34 @@ class GameState {
             this.autoRepeatDrop += framesPassed
             return false
         }
-        if (this.autoRepeatDrop === 3) {
-            this.autoRepeatDrop = 1
-            this.fallTimer = 0
-            this.pieceRow++
-            if (this.invalid()) {
-                this.pieceRow--
-                this.lockPiece()
-                return true
-            }
-            return false
-        }
 
         const dropSpeed = this.level >= 29 ? 1 : this.level > 19 ? 2 : DROP_SPEED_BY_LEVEL[this.level]
-        if (this.fallTimer > dropSpeed) {
+        if (this.fallTimer >= dropSpeed || this.autoRepeatDrop === 3) {
+            if (this.autoRepeatDrop === 3) {
+                this.autoRepeatDrop = 1
+            }
+            this.fallTimer = 0
+            if (this.currentPiece === undefined) {
+                this.spawnPiece()
+                return false
+            }
             this.pieceRow++
             if (this.invalid()) {
                 this.pieceRow--
                 this.lockPiece()
                 return true
             }
-            this.fallTimer = 0
         }
         return false
     }
 
-    lockPiece() {
-        this.placePiece()
-        this.clearLines()
+    spawnPiece() {
         this.currentPiece = this.nextPiece
         this.nextPiece = this.getRandomPiece()
         this.pieceRow = STARTING_ROW - this.currentPiece.highestBlockRow
         this.pieceCol = STARTING_COL - this.currentPiece.spawnCol
         this.autoRepeatDrop = 0
         this.stats[this.currentPiece.shape]++
-        window.dispatchEvent(new CustomEvent("sound", {detail: {type: "lock", player: this}}))
         if (this.invalid()) {
             this.gameOver++
             if (this.score > this.highScore) {
@@ -365,6 +361,13 @@ class GameState {
             this.init()
             this.field = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(' '))
         }
+    }
+
+    lockPiece() {
+        this.placePiece()
+        this.clearLines()
+        this.currentPiece = undefined
+        window.dispatchEvent(new CustomEvent("sound", {detail: {type: "lock", player: this}}))
     }
 
     placePiece() {
@@ -425,10 +428,12 @@ class GameState {
 
     getField() {
         let mat = [...Array(HEIGHT)].map(_=>Array(WIDTH).fill(false))
-        for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
-            for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
-                if (this.pieceRow + row >= 0 && this.currentPiece.get(row, col) !== ' ') {
-                    mat[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.color
+        if (this.currentPiece) {
+            for (let row = this.currentPiece.highestBlockRow; row <= this.currentPiece.lowestBlockRow; row++) {
+                for (let col = this.currentPiece.letfmostBlockCol; col <= this.currentPiece.righmostBlockCol; col++) {
+                    if (this.pieceRow + row >= 0 && this.currentPiece.get(row, col) !== ' ') {
+                        mat[this.pieceRow + row][this.pieceCol + col] = this.currentPiece.color
+                    }
                 }
             }
         }
