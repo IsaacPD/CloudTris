@@ -41,5 +41,21 @@ app.listen(PORT, () => {
 
 // Handles GET request to /
 router.get("/", (req, res) => {
-    res.render("home", {BACKEND_URL: BACKEND_URI})
+    axios.get(`${BACKEND_URI}/rooms`)
+    .then(response => {
+        res.render("home", {rooms: response.data})
+    })
 });
+
+router.post("/addroom", (req, res) => {
+    axios.post(`${BACKEND_URI}/room`)
+    .then(response => {
+        res.json({id: response.data.room})
+    })
+})
+
+router.get("/room/:id", (req, res) => {
+    const id = req.params.id
+
+    res.render("game")
+})

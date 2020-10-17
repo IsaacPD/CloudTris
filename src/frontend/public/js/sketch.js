@@ -25,7 +25,7 @@ class Player {
 let p1 = new Player()
 let p2 = new Player()
 let pause = false
-let p1Game = undefined
+let p1Game = new GameState(7, Math.random() * 100)
 let p2Game = undefined
 
 function setup() {
@@ -35,7 +35,6 @@ function setup() {
 function draw() {
     deltaSeconds = deltaTime / MSPS
     frames = deltaSeconds * FPS
-    console.log(frames)
     textStyle(BOLD);
     textSize(16)
     background(220)
@@ -43,20 +42,16 @@ function draw() {
     rect(0, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
     rect(PLAYER_TWO_START, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
 
-    if (!p1Game || !p2Game) {
-        fill("black")
-        text('Waiting for Player Two...', PLAYER_TWO_START, BLOCK_SIZE * HEIGHT / 2)
-        return
-    }
-
     if (pause) {
         fill("black")
         text('Game Paused, Press Space To Unpause', 0, BLOCK_SIZE * HEIGHT + 30)
         return
     }
-    
     updateAndDrawGame(p1Game, p1, 0, frames, true)
-    updateAndDrawGame(p2Game, p2, PLAYER_TWO_START, frames)
+    if (!p2Game) {
+        fill("black")
+        text('Waiting for Player Two...', PLAYER_TWO_START, BLOCK_SIZE * HEIGHT / 2)
+    } else updateAndDrawGame(p2Game, p2, PLAYER_TWO_START, frames)
 }
 
 function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
@@ -65,7 +60,7 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
     player.rot = -1
     let field = game.getField()
 
-    if (pieceLocked && emitLocked) {
+    if (pieceLocked && emitLocked && p2Game) {
         socket.emit('state', {
             field: game.field,
             totalLines: game.totalLines,
@@ -76,7 +71,7 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
             gameOver: game.gameOver
         })
     }
-    
+
     for (let row = 0; row < field.length; row++) {
         for (let col = 0; col < field[0].length; col++) {
             let x = col * BLOCK_SIZE
@@ -94,7 +89,7 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
     text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
     text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
     text(`High Score: ${game.highScore}`, xOffset, BLOCK_SIZE * HEIGHT + 70)
-    
+
     textSize(20)
     let yOffset = BLOCK_SIZE * 5
     for (let key in game.stats) {
@@ -115,7 +110,7 @@ function drawTetromino(shape, xOffset, yOffset) {
         for (let col = shape.letfmostBlockCol; col <= shape.righmostBlockCol; col++) {
             if (shape.get(row, col) === ' ') continue
             fill(color(shape.color.r, shape.color.g, shape.color.b))
-            rect(xOffset + BLOCK_SIZE * (col - shape.letfmostBlockCol), 
+            rect(xOffset + BLOCK_SIZE * (col - shape.letfmostBlockCol),
                  yOffset + BLOCK_SIZE * (row - shape.highestBlockRow), BLOCK_SIZE, BLOCK_SIZE)
         }
     }
@@ -137,11 +132,11 @@ function keyReleased() {
 
 function preload() {
     soundFormats('wav');
-    lineClearSound = loadSound('sound/line');
-    lockSound = loadSound('sound/lock');
-    rotateSound = loadSound('sound/rotate');
-    shiftSound = loadSound('sound/shift');
-    tetrisSound = loadSound('sound/tetris');
+    lineClearSound = loadSound('/sound/line');
+    lockSound = loadSound('/sound/lock');
+    rotateSound = loadSound('/sound/rotate');
+    shiftSound = loadSound('/sound/shift');
+    tetrisSound = loadSound('/sound/tetris');
 }
 
 function getInput(key) {
@@ -192,8 +187,18 @@ function releasePlayerInput(player, input) {
     }
 }
 
-const socket = io(document.location.href.slice(0, -1) + ":5000")
+let socket
+const url = document.location.href
+colon = document.location.href.lastIndexOf(":")
+room = url.slice(url.lastIndexOf("/") + 1)
+if (colon > 4) {
+  socket = io(document.location.href.slice(0, colon) + ":8080")
+} else {
+   socket = io(document.location.href.slice(0, url.indexOf("/room")) + ":5000")
+}
 
+
+socket.emit('room', room)
 socket.on('num_players', (num_players) => {
     if (num_players === 2) {
         socket.emit('ready', true)
