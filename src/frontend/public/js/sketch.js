@@ -192,14 +192,16 @@ const url = document.location.href
 colon = document.location.href.lastIndexOf(":")
 room = url.slice(url.lastIndexOf("/") + 1)
 if (colon > 4) {
-  socket = io(document.location.href.slice(0, colon) + ":8080")
+  socket = io(document.location.href.slice(0, colon) + ":8081")
 } else {
    socket = io(document.location.href.slice(0, url.indexOf("/room")) + ":5000")
 }
 
 
 socket.emit('room', room)
+
 socket.on('num_players', (num_players) => {
+    console.log(num_players)
     if (num_players === 2) {
         socket.emit('ready', true)
     }

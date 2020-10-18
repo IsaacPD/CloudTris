@@ -10,54 +10,6 @@ const PORT = process.env.PORT
 app.use('/', routes)
 app.use(logger('dev'))
 
-socketIdToRoom = {}
-roomMap = {}
-
-io.on('connection', (socket) => {
-  socket.on('room', (room) => {
-      socket.join(room)
-      if (!roomMap[room]) {
-          roomMap[room] = {players: 1, ready: 0, id: room}
-      } else {
-          roomMap[room].players++
-      }
-      socketIdToRoom[socket.id] = roomMap[room]
-      io.to(room).emit('num_players', roomMap[room].players)
-  })
-
-
-  socket.on('disconnect', () => {
-      socketIdToRoom[socket.id].players--
-      socketIdToRoom[socket.id].numReady = 0
-  })
-
-  socket.on('ready', (isReady) => {
-    const room = socketIdToRoom[socket.id]
-    if (isReady) {
-      room.numReady++
-    }
-
-    if (room.numReady === 2) {
-      io.to(room.id).emit('start', Math.random() * (((1 << 30) * 2) - 1))
-    }
-  })
-
-  socket.on('press', (key) => {
-    const room = socketIdToRoom[socket.id]
-    socket.to(room.id).emit('press', key)
-  })
-
-  socket.on('release', (keyCode) => {
-    const room = socketIdToRoom[socket.id]
-    socket.to(room.id).emit('release', keyCode)
-  })
-
-  socket.on('state', (field) => {
-    const room = socketIdToRoom[socket.id]
-    socket.to(room.id).emit('state', field)
-  })
-})
-
 // Application will fail if environment variables are not set
 if(!process.env.PORT) {
   const errMsg = "PORT environment variable is not defined"
@@ -80,4 +32,7 @@ http.listen(PORT, () => {
   console.log('Press Ctrl+C to quit.');
 });
 
-module.exports = app
+module.exports = {
+  app,
+  io
+}
