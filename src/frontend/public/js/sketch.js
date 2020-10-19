@@ -1,10 +1,12 @@
 //TODO Free for all
 //TODO Custom settings/rules for the tetris game per room
 
-const BLOCK_SIZE = 20
+const BLOCK_SIZE = 15
 const SPACE_IN_BETWEEN = BLOCK_SIZE * 8
 const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
 const GAME_OVERS = 3
+const MAX_GAMES = 9
+const GAMES_PER_ROW = 3
 const SHIFT_LEFT = "SHIFT_LEFT", SHIFT_RIGHT = "SHIFT_RIGHT", DROP_DOWN = "DROP_DOWN", ROTATE_LEFT = "ROTATE_LEFT", ROTATE_RIGHT = "ROTATE_RIGHT", PAUSE = "PAUSE"
 const MSPS = 1000
 const FPS = 60
@@ -56,14 +58,14 @@ let numPlayers = 0
 let numReady = 0
 
 function setup() {
-    createCanvas(5 * (BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), BLOCK_SIZE * (HEIGHT + 7));
+    createCanvas(GAMES_PER_ROW * (BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), (BLOCK_SIZE * (HEIGHT + 5)) * (MAX_GAMES / GAMES_PER_ROW));
 }
 
 function draw() {
     deltaSeconds = deltaTime / MSPS
     frames = deltaSeconds * FPS
     textStyle(BOLD);
-    textSize(16)
+    textSize(16 * (BLOCK_SIZE / 20))
     background(220)
 
     if (pause) {
@@ -77,7 +79,7 @@ function draw() {
     if (endPlayer) {
         fill("black")
         noStroke()
-        textSize(16)
+        textSize(16 * (BLOCK_SIZE / 20))
         text(`Games Over. the winning score is ${endPlayer.highScore}`, 0, BLOCK_SIZE * HEIGHT + 30)
         return
     }
@@ -85,16 +87,16 @@ function draw() {
     if (p1Game.gameOver >= GAME_OVERS) {
         fill("black")
         noStroke()
-        textSize(16)
+        textSize(16 * (BLOCK_SIZE / 20))
         text(`Game Over. Final High Score: ${p1Game.highScore}`, 0, BLOCK_SIZE * HEIGHT / 2)
     } else {
-        updateAndDrawGame(p1Game, p1, 0, frames, true)
+        updateAndDrawGame(p1Game, p1, 0, 0, frames, true)
     }
 
     if (numReady < numPlayers) {
         fill("black")
         noStroke()
-        textSize(16)
+        textSize(16 * (BLOCK_SIZE / 20))
         text('Waiting for Players To Ready Up', PLAYER_TWO_START, BLOCK_SIZE * HEIGHT / 2)
         text(`Players in the room ${numPlayers}`, PLAYER_TWO_START, BLOCK_SIZE * (HEIGHT / 2 + 1))
         text(`Players ready ${numReady}`, PLAYER_TWO_START, BLOCK_SIZE * (HEIGHT / 2 + 2))
@@ -124,16 +126,21 @@ function gameEnd() {
 
 function drawGames(frames) {
     let i = 1
+    let j = 0
     for (let p in games) {
         if (p === p1.id) continue
         let player = players[p]
         let game = games[p]
-        updateAndDrawGame(game, player, PLAYER_TWO_START * i, frames)
+        updateAndDrawGame(game, player, PLAYER_TWO_START * i, (BLOCK_SIZE * HEIGHT + 90) * j, frames)
         i++
+        if (i >= GAMES_PER_ROW) {
+            i = 0
+            j++
+        }
     }
 }
 
-function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
+function updateAndDrawGame(game, player, xOffset, yOffset, frames, emitLocked = false) {
     const pieceLocked = game.update(frames, player.pressed, player.held, player.rot)
     player.pressed = 0
     player.rot = -1
@@ -151,6 +158,10 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
         })
     }
 
+    textSize(16 * (BLOCK_SIZE / 20))
+    text(player.id, xOffset + BLOCK_SIZE * (WIDTH / 3), yOffset + BLOCK_SIZE)
+    yOffset += BLOCK_SIZE * 1.5
+
     for (let row = 0; row < field.length; row++) {
         for (let col = 0; col < field[0].length; col++) {
             let x = col * BLOCK_SIZE
@@ -158,7 +169,7 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
             if (!field[row][col]) {
                 stroke("white")
                 noFill()
-                rect(x + xOffset, y, BLOCK_SIZE, BLOCK_SIZE)
+                rect(x + xOffset, y + yOffset, BLOCK_SIZE, BLOCK_SIZE)
             }
         }
     }
@@ -170,34 +181,34 @@ function updateAndDrawGame(game, player, xOffset, frames, emitLocked = false) {
             if (field[row][col]) {
                 stroke("black")
                 fill(color(field[row][col].r, field[row][col].g, field[row][col].b))
-                rect(x + xOffset, y, BLOCK_SIZE, BLOCK_SIZE)
+                rect(x + xOffset, y + yOffset, BLOCK_SIZE, BLOCK_SIZE)
             }
         }
     }
 
-    textSize(16)
+    textSize(16 * (BLOCK_SIZE / 20))
     noStroke()
     fill("black")
-    text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, BLOCK_SIZE * HEIGHT + 30)
-    text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, BLOCK_SIZE * HEIGHT + 50)
-    text(`High Score: ${game.highScore}`, xOffset, BLOCK_SIZE * HEIGHT + 70)
-    text('NEXT', xOffset + BLOCK_SIZE * WIDTH + 30, BLOCK_SIZE)
+    text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 30)
+    text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 50)
+    text(`High Score: ${game.highScore}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 70)
+    text('NEXT', xOffset + BLOCK_SIZE * WIDTH + 30, yOffset + BLOCK_SIZE)
 
-    textSize(20)
-    let yOffset = BLOCK_SIZE * 5
+    textSize(20 * (BLOCK_SIZE / 20))
+    let y = yOffset + BLOCK_SIZE * 5
     for (let key in game.stats) {
         let shape = SHAPES[key]
         stroke("black")
-        drawTetromino(shape, xOffset + BLOCK_SIZE * WIDTH + 10, yOffset)
+        drawTetromino(shape, xOffset + BLOCK_SIZE * WIDTH + 10, y)
         noStroke()
         fill("black")
-        text(`: ${game.stats[key]}`, xOffset + BLOCK_SIZE * (WIDTH + 5), yOffset + (shape.lowestBlockRow - shape.highestBlockRow + 1) * BLOCK_SIZE / 2)
-        yOffset += (shape.lowestBlockRow - shape.highestBlockRow + 2) * BLOCK_SIZE
+        text(`: ${game.stats[key]}`, xOffset + BLOCK_SIZE * (WIDTH + 5), y + (shape.lowestBlockRow - shape.highestBlockRow + 1) * BLOCK_SIZE / 2)
+        y += (shape.lowestBlockRow - shape.highestBlockRow + 2) * BLOCK_SIZE
     }
     stroke("black")
-    drawTetromino(game.nextPiece, xOffset + BLOCK_SIZE * WIDTH + 30, BLOCK_SIZE * 2)    
+    drawTetromino(game.nextPiece, xOffset + BLOCK_SIZE * WIDTH + 30, yOffset + BLOCK_SIZE * 2)    
     noFill()
-    rect(xOffset, 0, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
+    rect(xOffset, yOffset, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
 }
 
 function drawTetromino(shape, xOffset, yOffset) {
@@ -297,6 +308,10 @@ function sendReady() {
 }
 
 socket.emit('room', room)
+socket.on('room', (id) => {
+    p1.id = id
+    $("#userIdForm").attr("placeholder", p1.id)
+})
 
 socket.on('num_players', (num_players) => {
     console.log(num_players)

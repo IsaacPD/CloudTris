@@ -13,9 +13,6 @@ html
                         a(href='/') Cloud Tetris
         .container.posts
             main
-            button(id="readyButton" onclick="sendReady()", class="btn btn-danger") Ready
-            button(id="modalButton" class="btn btn-info material-icons") settings
-            button(id="soundButton" class="btn btn-info material-icons" style="float: right") music_note
 
             div(id="settingsModal", class="modal")
                 div(class="modal-content")
@@ -32,6 +29,12 @@ html
                         input(type="file" id="userSounds" multiple)
                         div(id="soundContent")
             script(src="/js/sounds.js")
+        div(class="hang")
+            div(class="btn-group-vertical left" role="group")
+                button(id="readyButton" onclick="sendReady()", class="btn btn-danger") Ready
+                button(id="modalButton" class="btn btn-info material-icons") settings
+                button(id="soundButton" class="btn btn-info material-icons") music_note
+                input(type="text" class="form-control form-control-sm" id="userIdForm")
         .container
             #chat
                 ul(id="messages")

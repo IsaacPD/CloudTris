@@ -1,4 +1,5 @@
 const io = require("../app")
+const shortid = require('shortid')
 const {Message, User, Room} = require('./models')
 
 socketIdToRoom = {}
@@ -15,6 +16,7 @@ function onConnection(io) {
       }
       socketIdToRoom[socket.id] = roomMap[room]
       console.log(roomMap)
+      io.to(socket.id).emit("room", shortid.generate())
       io.to(room).emit('num_players', roomMap[room].numPlayers)
     })
 
