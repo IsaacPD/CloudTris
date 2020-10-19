@@ -9,7 +9,7 @@ html
                 h1
                     a(href='/') Cloud Tetris
         .container.posts.mt-0
-            h4
+            h3
                 p Current Rooms
             ul(id="rooms")
                 each room in rooms
@@ -18,4 +18,4 @@ html
                 else
                     li There are no rooms
 
-            button(onclick="addRoom()") Create Room
+            button(onclick="addRoom()" class="btn btn-primary") Create Room

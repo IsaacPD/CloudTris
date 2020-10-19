@@ -1,17 +1,12 @@
-var modal = $("#settingsModal");
-var btn = $("#modalButton");
-var span = $(".close");
+const modal = $("#settingsModal");
+const btn = $("#modalButton");
+const span = $("#settingsModalClose");
 btn.click(function() {
 	modal.css("display", "block");
 })
 span.click(function() {
 	modal.css("display", "none");
 })
-window.onclick = function(event) {
-  if (event.target == modal) {
-	modal.css("display", "none");
-  }
-}
 
 let content = $("#settingsContent")
 let table = $("<table>")
@@ -46,7 +41,7 @@ for (let input in KeyToInput) {
 content.append(table)
 
 window.addEventListener("keydown", function(e) {
-    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+    if([37, 38, 39, 40].indexOf(e.keyCode) > -1) {
         e.preventDefault();
     }
 }, false);

@@ -2,7 +2,7 @@ html
     head
         include head.pug
         script(src="https://cdn.jsdelivr.net/npm/p5@1.1.9/lib/p5.js")
-        script(src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.min.js" integrity="sha512-wM+t5MzLiNHl2fwT5rWSXr2JMeymTtixiw2lWyVk1JK/jDM4RBSFoH4J8LjucwlDdY6Mu84Kj0gPXp7rLGaDyA==" crossorigin="anonymous")
+        script(src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.0/howler.min.js")
         script(src="https://cdn.socket.io/socket.io-2.3.0.js")
         script(src="/js/constants.js")
         script(src="/js/sketch.js")
@@ -11,13 +11,31 @@ html
                 .container
                     h1
                         a(href='/') Cloud Tetris
-        .container.posts.mt-0
+        .container.posts
             main
-            button(id="modalButton" class="material-icons") settings
+            button(id="readyButton" onclick="sendReady()", class="btn btn-danger") Ready
+            button(id="modalButton" class="btn btn-info material-icons") settings
+            button(id="soundButton" class="btn btn-info material-icons" style="float: right") music_note
 
             div(id="settingsModal", class="modal")
                 div(class="modal-content")
-                    span(class="close") &times;
+                    span(class="close" id="settingsModalClose" style="float: right") &times;
                     h4 Settings
                     div(id="settingsContent")
             script(src="/js/settings.js")
+
+            div(id="soundModal", class="modal")
+                div(class="modal-content")
+                    span(class="close" id="soundModalClose" style="float: right") &times;
+                    h4 Upload Custom Sounds
+                    div
+                        input(type="file" id="userSounds" multiple)
+                        div(id="soundContent")
+            script(src="/js/sounds.js")
+        .container
+            #chat
+                ul(id="messages")
+                form(action="")
+                    input(id="m")
+                    button Send
+            script(src="/js/chat.js")

@@ -5,11 +5,12 @@ const logger = require('morgan')
 const http = require('http').createServer(app)
 const io = require('socket.io')(http)
 const {connectToMongoDB} = require('./routes/models')
+const onConnection = require('./routes/socket')
 const PORT = process.env.PORT
 
 app.use('/', routes)
 app.use(logger('dev'))
-
+io.on('connection', onConnection(io))
 // Application will fail if environment variables are not set
 if(!process.env.PORT) {
   const errMsg = "PORT environment variable is not defined"
