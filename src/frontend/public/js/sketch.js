@@ -1,16 +1,24 @@
-//TODO Free for all
-//TODO Custom settings/rules for the tetris game per room
-
-const BLOCK_SIZE = 15
-const SPACE_IN_BETWEEN = BLOCK_SIZE * 8
-const PLAYER_TWO_START = BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
-const GAME_OVERS = 3
-const MAX_GAMES = 9
-const GAMES_PER_ROW = 3
+//TODO Custom rules for the tetris game per room
+const DEFAULT_SIZE = 20
 const SHIFT_LEFT = "SHIFT_LEFT", SHIFT_RIGHT = "SHIFT_RIGHT", DROP_DOWN = "DROP_DOWN", ROTATE_LEFT = "ROTATE_LEFT", ROTATE_RIGHT = "ROTATE_RIGHT", PAUSE = "PAUSE"
 const MSPS = 1000
 const FPS = 60
 const SPF = 1 / 60
+const GAME_OVERS = 3
+
+let Settings = {
+    BLOCK_SIZE: DEFAULT_SIZE,
+    OTHER_BLOCK_SIZE: 10,
+    GAMES_PER_ROW: 3,
+    GAMES_PER_SMALL_ROW: 3,
+}
+
+let smallGridStyle = false
+let SPACE_IN_BETWEEN = Settings.BLOCK_SIZE * 8
+let SPACE_BTW_OTHER = Settings.OTHER_BLOCK_SIZE * 8
+let PLAYER_TWO_START = Settings.BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
+let OTHER_WIDTH = Settings.OTHER_BLOCK_SIZE * WIDTH + SPACE_BTW_OTHER
+let customSettings = false
 
 const KeyToInput = {
     SHIFT_LEFT : "ArrowLeft",
@@ -58,20 +66,33 @@ let numPlayers = 0
 let numReady = 0
 
 function setup() {
-    createCanvas(GAMES_PER_ROW * (BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), (BLOCK_SIZE * (HEIGHT + 5)) * (MAX_GAMES / GAMES_PER_ROW));
+    createCanvas(2 * (DEFAULT_SIZE * WIDTH + SPACE_IN_BETWEEN), (DEFAULT_SIZE * (HEIGHT + 6)));
+}
+
+function resizeGame() {
+    SPACE_IN_BETWEEN = Settings.BLOCK_SIZE * 8
+    SPACE_BTW_OTHER = Settings.OTHER_BLOCK_SIZE * 8
+    PLAYER_TWO_START = Settings.BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN
+    OTHER_WIDTH = Settings.OTHER_BLOCK_SIZE * WIDTH + SPACE_BTW_OTHER
+    if (!smallGridStyle) {
+        resizeCanvas(Settings.GAMES_PER_ROW * (Settings.BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN), (Settings.BLOCK_SIZE * (HEIGHT + 7)) * Math.ceil((numPlayers / Settings.GAMES_PER_ROW)))
+    } else {
+        resizeCanvas((Settings.BLOCK_SIZE * WIDTH + SPACE_IN_BETWEEN) + Settings.GAMES_PER_SMALL_ROW * (Settings.OTHER_BLOCK_SIZE * WIDTH + SPACE_BTW_OTHER), 
+            Math.max(Settings.BLOCK_SIZE * (HEIGHT + 6), Settings.OTHER_BLOCK_SIZE *(HEIGHT + 7) * Math.ceil(numPlayers / GAMES_PER_SMALL_ROW)))
+    }
 }
 
 function draw() {
     deltaSeconds = deltaTime / MSPS
     frames = deltaSeconds * FPS
     textStyle(BOLD);
-    textSize(16 * (BLOCK_SIZE / 20))
+    textSize(16 * (Settings.BLOCK_SIZE / 20))
     background(220)
 
     if (pause) {
         fill("black")
         noStroke()
-        text('Game Paused, Press Enter To Unpause', 0, BLOCK_SIZE * HEIGHT + 30)
+        text('Game Paused, Press Enter To Unpause', 0, Settings.BLOCK_SIZE * HEIGHT + 30)
         return
     }
 
@@ -79,27 +100,27 @@ function draw() {
     if (endPlayer) {
         fill("black")
         noStroke()
-        textSize(16 * (BLOCK_SIZE / 20))
-        text(`Games Over. the winning score is ${endPlayer.highScore}`, 0, BLOCK_SIZE * HEIGHT + 30)
+        textSize(16 * (Settings.BLOCK_SIZE / 20))
+        text(`Games Over. ${endPlayer.id} wins with a score of ${endPlayer.highScore}`, 0, Settings.BLOCK_SIZE * HEIGHT + 30)
         return
     }
 
     if (p1Game.gameOver >= GAME_OVERS) {
         fill("black")
         noStroke()
-        textSize(16 * (BLOCK_SIZE / 20))
-        text(`Game Over. Final High Score: ${p1Game.highScore}`, 0, BLOCK_SIZE * HEIGHT / 2)
+        textSize(16 * (Settings.BLOCK_SIZE / 20))
+        text(`Game Over. Final High Score: ${p1Game.highScore}`, 0, Settings.BLOCK_SIZE * HEIGHT / 2)
     } else {
-        updateAndDrawGame(p1Game, p1, 0, 0, frames, true)
+        updateAndDrawGame(p1Game, p1, 0, 0, Settings.BLOCK_SIZE, frames, true)
     }
 
     if (numReady < numPlayers) {
         fill("black")
         noStroke()
-        textSize(16 * (BLOCK_SIZE / 20))
-        text('Waiting for Players To Ready Up', PLAYER_TWO_START, BLOCK_SIZE * HEIGHT / 2)
-        text(`Players in the room ${numPlayers}`, PLAYER_TWO_START, BLOCK_SIZE * (HEIGHT / 2 + 1))
-        text(`Players ready ${numReady}`, PLAYER_TWO_START, BLOCK_SIZE * (HEIGHT / 2 + 2))
+        textSize(16 * (Settings.BLOCK_SIZE / 20))
+        text('Waiting for Players To Ready Up', PLAYER_TWO_START, Settings.BLOCK_SIZE * HEIGHT / 2)
+        text(`Players in the room ${numPlayers}`, PLAYER_TWO_START, Settings.BLOCK_SIZE * (HEIGHT / 2 + 1))
+        text(`Players ready ${numReady}`, PLAYER_TWO_START, Settings.BLOCK_SIZE * (HEIGHT / 2 + 2))
     } else {
         drawGames(frames)
     }
@@ -126,21 +147,36 @@ function gameEnd() {
 
 function drawGames(frames) {
     let i = 1
+    if (smallGridStyle) {
+        i = 0
+    }
     let j = 0
+
     for (let p in games) {
         if (p === p1.id) continue
         let player = players[p]
         let game = games[p]
-        updateAndDrawGame(game, player, PLAYER_TWO_START * i, (BLOCK_SIZE * HEIGHT + 90) * j, frames)
-        i++
-        if (i >= GAMES_PER_ROW) {
-            i = 0
-            j++
+        if (smallGridStyle) {
+            updateAndDrawGame(game, player, PLAYER_TWO_START + OTHER_WIDTH * i, 
+                (Settings.OTHER_BLOCK_SIZE * HEIGHT + 90) * j, Settings.OTHER_BLOCK_SIZE, frames)
+            i++
+            if (i >= Settings.GAMES_PER_SMALL_ROW) {
+                i = 0
+                j++
+            }
+        } else {
+            updateAndDrawGame(game, player, PLAYER_TWO_START * i, 
+                (Settings.BLOCK_SIZE * HEIGHT + 90) * j, Settings.OTHER_BLOCK_SIZE, frames)
+            i++
+            if (i >= Settings.GAMES_PER_ROW) {
+                i = 0
+                j++
+            }
         }
     }
 }
 
-function updateAndDrawGame(game, player, xOffset, yOffset, frames, emitLocked = false) {
+function updateAndDrawGame(game, player, xOffset, yOffset, blockSize, frames, emitLocked = false) {
     const pieceLocked = game.update(frames, player.pressed, player.held, player.rot)
     player.pressed = 0
     player.rot = -1
@@ -157,67 +193,68 @@ function updateAndDrawGame(game, player, xOffset, yOffset, frames, emitLocked = 
             gameOver: game.gameOver
         })
     }
-
-    textSize(16 * (BLOCK_SIZE / 20))
-    text(player.id, xOffset + BLOCK_SIZE * (WIDTH / 3), yOffset + BLOCK_SIZE)
-    yOffset += BLOCK_SIZE * 1.5
+    noStroke()
+    fill("black")
+    textSize(16 * (blockSize / 20))
+    text(player.id, xOffset + blockSize * (WIDTH / 3), yOffset + blockSize)
+    yOffset += blockSize * 1.5
 
     for (let row = 0; row < field.length; row++) {
         for (let col = 0; col < field[0].length; col++) {
-            let x = col * BLOCK_SIZE
-            let y = row * BLOCK_SIZE
+            let x = col * blockSize
+            let y = row * blockSize
             if (!field[row][col]) {
                 stroke("white")
                 noFill()
-                rect(x + xOffset, y + yOffset, BLOCK_SIZE, BLOCK_SIZE)
+                rect(x + xOffset, y + yOffset, blockSize, blockSize)
             }
         }
     }
 
     for (let row = 0; row < field.length; row++) {
         for (let col = 0; col < field[0].length; col++) {
-            let x = col * BLOCK_SIZE
-            let y = row * BLOCK_SIZE
+            let x = col * blockSize
+            let y = row * blockSize
             if (field[row][col]) {
                 stroke("black")
                 fill(color(field[row][col].r, field[row][col].g, field[row][col].b))
-                rect(x + xOffset, y + yOffset, BLOCK_SIZE, BLOCK_SIZE)
+                rect(x + xOffset, y + yOffset, blockSize, blockSize)
             }
         }
     }
 
-    textSize(16 * (BLOCK_SIZE / 20))
+    textSize(16 * (blockSize / 20))
     noStroke()
     fill("black")
-    text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 30)
-    text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 50)
-    text(`High Score: ${game.highScore}`, xOffset, yOffset + BLOCK_SIZE * HEIGHT + 70)
-    text('NEXT', xOffset + BLOCK_SIZE * WIDTH + 30, yOffset + BLOCK_SIZE)
+    text(`Lines: ${game.totalLines} Score: ${game.score}`, xOffset, yOffset + blockSize * HEIGHT + 30)
+    text(`Level: ${game.level} Game Overs: ${game.gameOver}`, xOffset, yOffset + blockSize * HEIGHT + 50)
+    text(`High Score: ${game.highScore}`, xOffset, yOffset + blockSize * HEIGHT + 70)
+    text('NEXT', xOffset + blockSize * WIDTH + 30, yOffset + blockSize)
 
-    textSize(20 * (BLOCK_SIZE / 20))
-    let y = yOffset + BLOCK_SIZE * 5
+    textSize(20 * (blockSize / 20))
+    let y = yOffset + blockSize * 5
     for (let key in game.stats) {
         let shape = SHAPES[key]
         stroke("black")
-        drawTetromino(shape, xOffset + BLOCK_SIZE * WIDTH + 10, y)
+        drawTetromino(shape, xOffset + blockSize * WIDTH + 10, y, blockSize)
         noStroke()
         fill("black")
-        text(`: ${game.stats[key]}`, xOffset + BLOCK_SIZE * (WIDTH + 5), y + (shape.lowestBlockRow - shape.highestBlockRow + 1) * BLOCK_SIZE / 2)
-        y += (shape.lowestBlockRow - shape.highestBlockRow + 2) * BLOCK_SIZE
+        text(`: ${game.stats[key]}`, xOffset + blockSize * (WIDTH + 5), y + (shape.lowestBlockRow - shape.highestBlockRow + 1) * blockSize / 2)
+        y += (shape.lowestBlockRow - shape.highestBlockRow + 2) * blockSize
     }
     stroke("black")
-    drawTetromino(game.nextPiece, xOffset + BLOCK_SIZE * WIDTH + 30, yOffset + BLOCK_SIZE * 2)    
+    drawTetromino(game.nextPiece, xOffset + blockSize * WIDTH + 30, yOffset + blockSize * 2, blockSize)    
     noFill()
-    rect(xOffset, yOffset, BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT)
+    rect(xOffset, yOffset, blockSize * WIDTH, blockSize * HEIGHT)
 }
 
-function drawTetromino(shape, xOffset, yOffset) {
+function drawTetromino(shape, xOffset, yOffset, blockSize) {
     for (let row = shape.highestBlockRow; row <= shape.lowestBlockRow; row++) {
         for (let col = shape.letfmostBlockCol; col <= shape.righmostBlockCol; col++) {
             if (shape.get(row, col) === ' ') continue
             fill(color(shape.color.r, shape.color.g, shape.color.b))
-            rect(xOffset + BLOCK_SIZE * (col - shape.letfmostBlockCol),
-                 yOffset + BLOCK_SIZE * (row - shape.highestBlockRow), BLOCK_SIZE, BLOCK_SIZE)
+            rect(xOffset + blockSize * (col - shape.letfmostBlockCol),
+                 yOffset + blockSize * (row - shape.highestBlockRow), blockSize, blockSize)
         }
     }
 }
@@ -238,8 +275,11 @@ function keyReleased() {
 
 function getInput(key) {
     for (let input in KeyToInput) {
-        if (KeyToInput[input] === key)
+        if (KeyToInput[input] === key) {
+            if (input === PAUSE && $("#m").is(":focus"))
+                return undefined
             return input
+        }
     }
     return undefined
 }
@@ -294,7 +334,8 @@ if (colon > 4) {
     socket = io(document.location.href.slice(0, url.indexOf("/room")) + ":5000")
 }
 
-function sendReady() {   
+function sendReady() {
+    $("#m").val("ready")
     readyBtn = $("#readyButton")
     isReady = !isReady
     if (isReady) {
@@ -331,6 +372,23 @@ socket.on('start', (playersInRoom, seed) => {
     }
     p1 = players[p1.id]
     p1Game = games[p1.id]
+    
+    if (!customSettings) {
+        if (playersInRoom.length === 2) {
+            Settings.BLOCK_SIZE = 20
+            Settings.OTHER_BLOCK_SIZE = 20
+            Settings.GAMES_PER_ROW = 2
+        } else if (playersInRoom.length <= 6) {
+            Settings.BLOCK_SIZE = 15
+            Settings.OTHER_BLOCK_SIZE = 15
+            Settings.GAMES_PER_ROW = 3
+        } else if (playersInRoom.length <= 10) {
+            smallGridStyle = true
+            Settings.BLOCK_SIZE = 20
+            Settings.OTHER_BLOCK_SIZE = 10
+        }
+    }
+    resizeGame()
 })
 
 socket.on('press', (id, key) => {

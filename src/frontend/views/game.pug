@@ -11,15 +11,34 @@ html
                 .container
                     h1
                         a(href='/') Cloud Tetris
-        .container.posts
-            main
+        .container-fluid.posts
+            div(class="row justify-content-around")
+                div(class="col")
+                    main
+                div(class="col" id="other-pane")                
+                    #chat.overflow-auto
+                        ul(id="messages")
+                    div(class="btn-toolbar mb-3" role="toolbar" aria-label="Toolbar with button groups")
+                        form(action="" class="form-inline")
+                            div(class="input-group")                      
+                                input(type="text" class="form-control" id="userIdForm")  
+                                input(id="m" class="form-control" placeholder="Send a message")
+                                div(class="input-group-append")
+                                    button(class="btn btn-primary" type="submit") Send                    
+                            div(class="btn-group mr-2" role="group")
+                                button(id="readyButton" onclick="sendReady()", class="btn btn-danger") Ready
+                                button(id="modalButton" class="btn btn-info material-icons") settings
+                                button(id="soundButton" class="btn btn-info material-icons") music_note
 
-            div(id="settingsModal", class="modal")
-                div(class="modal-content")
-                    span(class="close" id="settingsModalClose" style="float: right") &times;
-                    h4 Settings
-                    div(id="settingsContent")
-            script(src="/js/settings.js")
+                div(id="settingsModal", class="modal")
+                    div(class="modal-content")
+                        span(class="close" id="settingsModalClose" style="float: right") &times;
+                        h4 Settings
+                        div(id="settingsContent")
+                        div 
+                            input(type="checkbox" value="" id="defaultCheck1" onclick="smallGridStyle = !smallGridStyle; customSettings = true")
+                            label(for="defaultCheck1")   Enable Small Grid Mode
+                        button(type="button" class="btn btn-info" onclick="resizeGame()") Resize Game
 
             div(id="soundModal", class="modal")
                 div(class="modal-content")
@@ -28,17 +47,6 @@ html
                     div
                         input(type="file" id="userSounds" multiple)
                         div(id="soundContent")
-            script(src="/js/sounds.js")
-        div(class="hang")
-            div(class="btn-group-vertical left" role="group")
-                button(id="readyButton" onclick="sendReady()", class="btn btn-danger") Ready
-                button(id="modalButton" class="btn btn-info material-icons") settings
-                button(id="soundButton" class="btn btn-info material-icons") music_note
-                input(type="text" class="form-control form-control-sm" id="userIdForm")
-        .container
-            #chat
-                ul(id="messages")
-                form(action="")
-                    input(id="m")
-                    button Send
-            script(src="/js/chat.js")
+        script(src="/js/chat.js")
+        script(src="/js/sounds.js")
+        script(src="/js/settings.js")

@@ -38,7 +38,30 @@ for (let input in KeyToInput) {
 	table.append(row)
 }
 
+let settingsTable = $("<table>")
+
+for (let setting in Settings) {
+	let row = $("<tr>")
+
+	let textInput = $("<input type='text'>").val(Settings[setting])
+
+	let setValue = function() {
+		customSettings = true
+		Settings[setting] = Number(textInput.val())
+	}
+
+	textInput.on('input', setValue)
+
+	let buttonCol = $("<td>").append($('<label/>', {text: setting}))
+	let textInputCol = $("<td>").append(textInput)
+
+	row.append(buttonCol)
+	row.append(textInputCol)
+	settingsTable.append(row)
+}
+
 content.append(table)
+content.append(settingsTable)
 
 window.addEventListener("keydown", function(e) {
     if([37, 38, 39, 40].indexOf(e.keyCode) > -1) {
